@@ -8,54 +8,67 @@ require '../vendor/autoload.php';
 
 class Applicant
 {
+
+
     // Listar todos los postulantes
     public function listar()
     {
-        $sql = "SELECT a.*, c.company_name, jp.position_name 
+        $sql = "SELECT a.*, c.company_name, jp.position_name, ar.area_name
                 FROM applicants a
                 LEFT JOIN companies c ON a.company_id = c.id
-                LEFT JOIN job_positions jp ON a.job_id = jp.id";
+                LEFT JOIN jobs jp ON a.job_id = jp.id
+                LEFT JOIN areas ar ON a.area_id = ar.id";
         return ejecutarConsulta($sql);
     }
 
     // Insertar un nuevo postulante
-    public function insertar($company_id, $job_id, $username, $email, $lastname, $surname, $names)
+    public function insertar($company_id, $area_id, $job_id, $username, $email, $lastname, $surname, $names)
     {
-        $password = bin2hex(random_bytes(4)); // Generar una contraseña aleatoria
-        $password_hashed = password_hash($password, PASSWORD_DEFAULT); // Encriptar la contraseña
-
-        $sql = "INSERT INTO applicants (company_id, job_id, username, password, email, lastname, surname, names, is_active) 
-                VALUES ('$company_id', '$job_id', '$username', '$password_hashed', '$email', '$lastname', '$surname', '$names', '1')";
-
-        $result = ejecutarConsulta($sql);
-
-        if ($result) {
-            // Enviar correo con la contraseña generada
-            if (!$this->enviarCorreo($email, $username, $names, $password)) {
-                return "Postulante creado, pero el correo no se pudo enviar";
-            }
-            return "Postulante registrado correctamente y correo enviado";
+        // Verificar si el DNI ya existe
+        if ($this->usernameExiste($username)) {
+            return "El DNI ya está en uso. Por favor, verifica.";
         }
-
-        return "No se pudo registrar el postulante";
+    
+        // Generar contraseña aleatoria
+        $password = bin2hex(random_bytes(4)); // 8 caracteres
+        $password_hashed = password_hash($password, PASSWORD_DEFAULT);
+    
+        // Insertar el nuevo postulante utilizando consultas preparadas
+        $sql = "INSERT INTO applicants (company_id, area_id, job_id, username, password, email, lastname, surname, names, is_active) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, '1')";
+        $params = [$company_id, $area_id, $job_id, $username, $password_hashed, $email, $lastname, $surname, $names];
+    
+        $result = ejecutarConsulta($sql, $params);
+    
+        if ($result) {
+            // Enviar el correo con las credenciales
+            if (!$this->enviarCorreo($email, $username, $names, $password)) {
+                return "Postulante creado, pero no se pudo enviar el correo.";
+            }
+            return "Postulante registrado correctamente y correo enviado.";
+        }
+    
+        return "No se pudo registrar el postulante.";
     }
+    
 
-    public function editar($id, $company_id, $job_id, $username, $email, $lastname, $surname, $names)
+
+    // Editar un postulante existente
+    public function editar($id, $company_id, $area_id, $job_id, $username, $email, $lastname, $surname, $names)
     {
         $sql = "UPDATE applicants 
-            SET company_id = '$company_id', 
-                job_id = '$job_id', 
-                username = '$username', 
-                email = '$email', 
-                lastname = '$lastname', 
-                surname = '$surname', 
-                names = '$names' 
-            WHERE id = '$id'";
+                SET company_id = '$company_id', 
+                    area_id = '$area_id',
+                    job_id = '$job_id', 
+                    username = '$username', 
+                    email = '$email', 
+                    lastname = '$lastname', 
+                    surname = '$surname', 
+                    names = '$names' 
+                WHERE id = '$id'";
 
-        // Verificar y retornar el resultado
         return ejecutarConsulta($sql);
     }
-
 
     // Desactivar postulante
     public function desactivar($id)
@@ -85,12 +98,22 @@ class Applicant
         return ejecutarConsulta($sql);
     }
 
+    // Listar áreas para el select
+    public function listarAreasPorEmpresa($company_id)
+    {
+        $sql = "SELECT id, area_name FROM areas WHERE company_id = ?";
+        $params = [$company_id];
+        return ejecutarConsulta($sql, $params);
+    }
+
     // Listar puestos activos para el select
     public function listarPuestosActivos()
     {
-        $sql = "SELECT id, position_name FROM job_positions WHERE is_active = 1";
+        $sql = "SELECT id, position_name FROM jobs WHERE is_active = 1";
         return ejecutarConsulta($sql);
     }
+
+    // Enviar correo con las credenciales
     private function enviarCorreo($email, $username, $names, $password)
     {
         $mail = new PHPMailer(true);
@@ -137,14 +160,13 @@ class Applicant
     {
         $sql = "SELECT * FROM applicants WHERE username = '$username' AND is_active = 1";
         $result = ejecutarConsultaSimpleFila($sql);
-    
+
         if ($result && password_verify($password, $result['password'])) {
             return $result;
         } else {
             return false;
         }
     }
-    
 
     // Registrar login del postulante
     public function registrarLogin($applicantId)
@@ -165,5 +187,20 @@ class Applicant
     {
         $sql = "SELECT access_time, logout_time FROM applicant_access_logs WHERE applicant_id = '$applicantId' ORDER BY access_time DESC";
         return ejecutarConsulta($sql);
+    }
+
+    public function listarPuestosPorArea($area_id)
+    {
+        $sql = "SELECT id, position_name FROM jobs WHERE area_id = ? AND is_active = 1";
+        $params = [$area_id];
+        return ejecutarConsulta($sql, $params);
+    }
+
+    private function usernameExiste($username)
+    {
+        $sql = "SELECT COUNT(*) as count FROM applicants WHERE username = ?";
+        $params = [$username];
+        $result = ejecutarConsultaSimpleFila($sql, $params);
+        return $result['count'] > 0;
     }
 }

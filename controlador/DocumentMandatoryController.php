@@ -98,8 +98,8 @@ switch ($_GET["op"]) {
         break;
 
     case 'selectJobPositions':
-        require_once "../modelos/JobPositions.php";
-        $jobPositions = new JobPositions();
+        require_once "../modelos/Jobs.php";
+        $jobPositions = new Jobs();
         $rspta = $jobPositions->select();
         while ($reg = $rspta->fetch_object()) {
             echo '<option value=' . $reg->id . '>' . $reg->position_name . '</option>';
@@ -118,9 +118,9 @@ switch ($_GET["op"]) {
 
     case 'selectJobPositionsByCompany':
         $company_id = $_POST['company_id'];
-        require_once "../modelos/JobPositions.php";
-        $jobPositions = new JobPositions();
-        $rspta = $jobPositions->selectByCompany($company_id);
+        require_once "../modelos/Jobs.php";
+        $jobPositions = new Jobs();
+        $rspta = $jobPositions->select($company_id);
         while ($reg = $rspta->fetch_object()) {
             echo '<option value="' . $reg->id . '">' . $reg->position_name . '</option>';
         }

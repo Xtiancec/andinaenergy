@@ -1,5 +1,3 @@
-// scripts/user.js
-
 $(document).ready(function () {
     init();
 });
@@ -14,21 +12,21 @@ function init() {
     cargarEmpresas("#company_id");
     cargarEmpresas("#company_idUpdate");
 
-    // Eventos al abrir el modal de agregar usuario
+    // Evento al abrir el modal de agregar usuario
     $('#formularioregistros').on('show.bs.modal', function (e) {
         $('#formulario')[0].reset();
         $('#formulario').removeClass('was-validated');
-        resetFeedback('#identification_number_feedback', '#username_feedback');
+        resetFeedback('#username_feedback');
     });
 
-    // Eventos al abrir el modal de actualizar usuario
+    // Evento al abrir el modal de actualizar usuario
     $('#formularioActualizar').on('show.bs.modal', function (e) {
         $('#formActualizar')[0].reset();
         $('#formActualizar').removeClass('was-validated');
-        resetFeedback('#identification_numberUpdate_feedback', '#usernameUpdate_feedback');
+        resetFeedback('#usernameUpdate_feedback');
     });
 
-    // Manejo del evento submit para guardar usuario
+    // Manejar el evento submit para agregar usuario
     $("#formulario").on("submit", function (e) {
         e.preventDefault();
         if (this.checkValidity() === false) {
@@ -39,7 +37,7 @@ function init() {
         verificarYGuardar();
     });
 
-    // Manejo del evento submit para actualizar usuario
+    // Manejar el evento submit para actualizar usuario
     $("#formActualizar").on("submit", function (e) {
         e.preventDefault();
         if (this.checkValidity() === false) {
@@ -50,48 +48,52 @@ function init() {
         actualizar();
     });
 
-    // Verificación en tiempo real de duplicados
+    // Verificación en tiempo real de duplicados de username
     setupDuplicateCheck();
 
-    // Selectores dependientes para agregar usuario
+    // Configurar selectores dependientes para agregar y actualizar usuarios
     setupDependentSelectors("#company_id", "#area_id", "#job_id");
-
-    // Selectores dependientes para actualizar usuario
     setupDependentSelectors("#company_idUpdate", "#area_idUpdate", "#job_idUpdate");
 
-    // Event listeners para consultar DNI
-    setupDNICheck();
+    // Consulta DNI al cambiar el campo del username al agregar
+    $("#username").on('change', function () {
+        const dni = $(this).val().trim();
+        if (dni.length === 8) {  // Asegúrate de que el DNI tiene 8 dígitos
+            consultarDNI(dni);
+        }
+    });
+
+    // Consulta DNI al cambiar el campo del username al actualizar
+    $("#usernameUpdate").on('change', function () {
+        const dni = $(this).val().trim();
+        if (dni.length === 8) {  // Asegúrate de que el DNI tiene 8 dígitos
+            consultarDNIUpdate(dni);
+        }
+    });
 }
 
-// Función para resetear mensajes de feedback
+
+// Función para resetear los mensajes de feedback
 function resetFeedback(...selectors) {
     selectors.forEach(selector => {
         $(selector).html('');
     });
 }
 
-// Función para configurar la verificación de duplicados
+// Configuración de verificación en tiempo real de duplicados de username
 function setupDuplicateCheck() {
     // Agregar usuario
-    $("#identification_number").on('change', function () {
-        verificarDuplicadoIdentificationNumber($(this).val().trim(), $("#identification_type").val(), null, '#identification_number_feedback');
-    });
-
     $("#username").on('change', function () {
         verificarDuplicadoUsername($(this).val().trim(), null, '#username_feedback');
     });
 
     // Actualizar usuario
-    $("#identification_numberUpdate").on('change', function () {
-        verificarDuplicadoIdentificationNumber($(this).val().trim(), $("#identification_typeUpdate").val(), $("#idUpdate").val(), '#identification_numberUpdate_feedback');
-    });
-
     $("#usernameUpdate").on('change', function () {
         verificarDuplicadoUsername($(this).val().trim(), $("#idUpdate").val(), '#usernameUpdate_feedback');
     });
 }
 
-// Función para configurar selectores dependientes
+// Configuración de selectores dependientes
 function setupDependentSelectors(companySelector, areaSelector, jobSelector) {
     $(companySelector).on('change', function () {
         var company_id = $(this).val();
@@ -113,28 +115,9 @@ function setupDependentSelectors(companySelector, areaSelector, jobSelector) {
     });
 }
 
-// Función para resetear selectores
+// Función para resetear los selectores
 function resetSelect(selector, placeholder) {
     $(selector).html(`<option value="">Seleccione un ${placeholder}</option>`);
-}
-
-// Función para configurar consultas de DNI
-function setupDNICheck() {
-    // Agregar usuario
-    $("#identification_number").on('blur', function () {
-        var dni = $(this).val().trim();
-        if (dni.length === 8 && $("#identification_type").val() === "DNI") {
-            consultarDNI(dni);
-        }
-    });
-
-    // Actualizar usuario
-    $("#identification_numberUpdate").on('blur', function () {
-        var dni = $(this).val().trim();
-        if (dni.length === 8 && $("#identification_typeUpdate").val() === "DNI") {
-            consultarDNIUpdate(dni);
-        }
-    });
 }
 
 // Función para listar usuarios en la tabla
@@ -147,7 +130,7 @@ function listar() {
             type: "GET",
             dataType: "json",
             error: function (e) {
-                console.log("Error en listar: ", e.responseText);
+                console.log("Error en el listado: ", e.responseText);
                 Swal.fire('Error', 'No se pudo cargar la lista de usuarios.', 'error');
             }
         },
@@ -161,7 +144,7 @@ function listar() {
             { "data": "company_name" },
             { "data": "area_name" },
             { "data": "position_name" },
-            { "data": "identification_number" },
+            { "data": "username" },
             { "data": "full_name" },
             { "data": "email" },
             { "data": "role" },
@@ -235,50 +218,25 @@ function cargarPuestosPorArea(area_id, selector, selectedId = null) {
             $(selector).html(options);
         },
         error: function (xhr, status, error) {
-            console.error(`Error al cargar puestos de trabajo por Área: ${error}`);
+            console.error(`Error al cargar puestos de trabajo: ${error}`);
             $(selector).html('<option value="">Seleccione un Puesto de Trabajo</option>');
             Swal.fire('Error', 'No se pudieron cargar los puestos de trabajo.', 'error');
         }
     });
 }
 
-// Función para verificar duplicados de identification_number
-function verificarDuplicadoIdentificationNumber(identification_number, identification_type, userId = null, feedbackSelector) {
-    if (!identification_number || !identification_type) return;
-
-    $.ajax({
-        url: '../controlador/UserController.php?op=verificarDuplicado',
-        type: 'POST',
-        data: { 
-            identification_number: identification_number, 
-            identification_type: identification_type,
-            userId: userId
-        },
-        dataType: 'json',
-        success: function (response) {
-            if (response.existsIdentificationNumber) {
-                $(feedbackSelector).html('El número de identificación ya está registrado.').addClass('text-danger').removeClass('text-success');
-            } else {
-                $(feedbackSelector).html('Número de identificación disponible.').addClass('text-success').removeClass('text-danger');
-            }
-        },
-        error: function (xhr, status, error) {
-            console.error(`Error al verificar identification_number: ${error}`);
-            $(feedbackSelector).html('Error al verificar el número de identificación.').addClass('text-danger').removeClass('text-success');
-        }
-    });
-}
-
 // Función para verificar duplicados de username
+// Función para verificar duplicados antes de guardar o actualizar
+// Verify before adding or updating the user
 function verificarDuplicadoUsername(username, userId = null, feedbackSelector) {
     if (!username) return;
 
     $.ajax({
         url: '../controlador/UserController.php?op=verificarDuplicado',
         type: 'POST',
-        data: { 
-            username: username, 
-            userId: userId 
+        data: {
+            username: username,
+            userId: userId  // Pass userId to avoid self-duplication during updates
         },
         dataType: 'json',
         success: function (response) {
@@ -295,36 +253,31 @@ function verificarDuplicadoUsername(username, userId = null, feedbackSelector) {
     });
 }
 
+
+
 // Función para verificar duplicados antes de guardar
 function verificarYGuardar() {
-    var identification_number = $("#identification_number").val().trim();
-    var identification_type = $("#identification_type").val();
     var username = $("#username").val().trim();
 
     $.ajax({
         url: '../controlador/UserController.php?op=verificarDuplicado',
         type: 'POST',
-        data: {
-            identification_number: identification_number,
-            identification_type: identification_type,
-            username: username
-        },
+        data: { username: username },
         dataType: 'json',
-        success: function(response) {
-            if (response.existsIdentificationNumber || response.existsUsername) {
-                Swal.fire('Error', 'El número de identificación o nombre de usuario ya está registrado.', 'error');
+        success: function (response) {
+            if (response.existsUsername) {
+                Swal.fire('Error', 'El nombre de usuario ya está registrado.', 'error');
             } else {
                 guardarUsuario();
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error(`Error al verificar duplicados: ${error}`);
             Swal.fire('Error', 'Error al verificar duplicados.', 'error');
         }
     });
 }
 
-// Función para guardar usuario
 function guardarUsuario() {
     var formData = new FormData($("#formulario")[0]);
 
@@ -337,19 +290,34 @@ function guardarUsuario() {
         dataType: 'json',
         success: function (response) {
             if (response.success) {
-                Swal.fire('Éxito', response.message, 'success');
+                // Mostrar un mensaje de éxito con Swal
+                Swal.fire({
+                    icon: 'success', // Cambiamos el icono a "success"
+                    title: 'Éxito',
+                    text: response.message
+                });
                 $("#formularioregistros").modal("hide");
                 tabla.ajax.reload();
             } else {
-                Swal.fire('Error', response.message, 'error');
+                // Mostrar un mensaje de error con Swal
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: response.message
+                });
             }
         },
         error: function (xhr, status, error) {
-            console.error(`Error al guardar el usuario: ${error}`);
-            Swal.fire('Error', 'Error al registrar el usuario.', 'error');
+            console.error(`Error al guardar usuario: ${error}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error al registrar el usuario.'
+            });
         }
     });
 }
+
 
 // Función para mostrar los datos de un usuario en el formulario de actualización
 function mostrar(id) {
@@ -362,55 +330,59 @@ function mostrar(id) {
             if (data) {
                 $("#formularioActualizar").modal("show");
 
+                // Cargar las empresas, áreas y puestos seleccionados
                 cargarEmpresas("#company_idUpdate", data.company_id);
                 cargarAreas(data.company_id, "#area_idUpdate", data.area_id);
                 cargarPuestosPorArea(data.area_id, "#job_idUpdate", data.job_id);
 
+                // Asignar los valores a los campos
                 $("#idUpdate").val(data.id);
-                $("#identification_typeUpdate").val(data.identification_type);
-                $("#identification_numberUpdate").val(data.identification_number);
                 $("#usernameUpdate").val(data.username);
                 $("#emailUpdate").val(data.email);
                 $("#lastnameUpdate").val(data.lastname);
                 $("#surnameUpdate").val(data.surname);
                 $("#namesUpdate").val(data.names);
-                $("#nacionalityUpdate").val(data.nacionality);
                 $("#roleUpdate").val(data.role);
                 $("#is_employeeUpdate").val(data.is_employee);
+
+                // Asignar el tipo de identificación seleccionado
+                $("#identification_typeUpdate").val(data.identification_type);
+                
+                // Asignar la nacionalidad seleccionada
+                $("#nacionalityUpdate").val(data.nacionality);
             } else {
                 Swal.fire('Error', 'No se encontraron datos para el usuario seleccionado.', 'error');
             }
         },
         error: function (xhr, status, error) {
-            console.error("Error al mostrar el usuario: ", error);
-            Swal.fire('Error', 'No se pudo obtener los datos del usuario.', 'error');
+            console.error("Error al mostrar los datos del usuario: ", error);
+            Swal.fire('Error', 'Error al mostrar los datos del usuario.', 'error');
         }
     });
 }
 
-// Función para actualizar usuario
+
+// Función para actualizar un usuario
 function actualizar() {
     var formData = new FormData($("#formActualizar")[0]);
 
-    var identification_number = $("#identification_numberUpdate").val().trim();
-    var identification_type = $("#identification_typeUpdate").val();
-    var username = $("#usernameUpdate").val().trim();
-    var userId = $("#idUpdate").val();
+    var username = $("#usernameUpdate").val().trim(); // Username o DNI
+    var userId = $("#idUpdate").val(); // ID del usuario que se está editando
 
+    // Verificar si el DNI ya existe en otro usuario, pero ignorar al mismo usuario que se está editando
     $.ajax({
         url: '../controlador/UserController.php?op=verificarDuplicado',
         type: 'POST',
         data: {
-            identification_number: identification_number,
-            identification_type: identification_type,
             username: username,
-            userId: userId
+            userId: userId  // Pasamos el ID del usuario para que no se considere como duplicado si es el mismo
         },
         dataType: 'json',
-        success: function(response) {
-            if (response.existsIdentificationNumber || response.existsUsername) {
-                Swal.fire('Error', 'El número de identificación o nombre de usuario ya está registrado por otro usuario.', 'error');
+        success: function (response) {
+            if (response.existsUsername) {
+                Swal.fire('Error', 'El nombre de usuario ya está registrado por otro usuario.', 'error');
             } else {
+                // Si no está duplicado, realizamos la actualización
                 $.ajax({
                     url: "../controlador/UserController.php?op=actualizar",
                     type: "POST",
@@ -428,13 +400,13 @@ function actualizar() {
                         }
                     },
                     error: function (xhr, status, error) {
-                        console.error(`Error al actualizar el usuario: ${error}`);
+                        console.error(`Error al actualizar usuario: ${error}`);
                         Swal.fire('Error', 'Error al actualizar el usuario.', 'error');
                     }
                 });
             }
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error(`Error al verificar duplicados: ${error}`);
             Swal.fire('Error', 'Error al verificar duplicados.', 'error');
         }
@@ -503,7 +475,7 @@ function desactivar(id) {
     });
 }
 
-// Función para obtener historial de accesos
+// Función para obtener el historial de acceso del usuario
 function mostrarHistorial(userId) {
     $.ajax({
         url: '../controlador/UserController.php?op=obtenerHistorialAcceso',
@@ -533,7 +505,8 @@ function mostrarHistorial(userId) {
     });
 }
 
-// Función para consultar DNI al agregar usuario
+
+// Function to check DNI when adding a user
 function consultarDNI(dni) {
     $.ajax({
         url: 'proxy.php',
@@ -550,13 +523,14 @@ function consultarDNI(dni) {
             }
         },
         error: function (xhr, status, error) {
-            console.error("Error al consultar DNI: ", error);
+            console.error("Error fetching DNI: ", error);
             Swal.fire('Error', 'No se pudieron obtener los datos del DNI.', 'error');
         }
     });
 }
 
-// Función para consultar DNI al actualizar usuario
+
+// Function to check DNI when updating a user
 function consultarDNIUpdate(dni) {
     $.ajax({
         url: 'proxy.php',
@@ -573,8 +547,46 @@ function consultarDNIUpdate(dni) {
             }
         },
         error: function (xhr, status, error) {
-            console.error("Error al consultar DNI: ", error);
+            console.error("Error fetching DNI: ", error);
             Swal.fire('Error', 'No se pudieron obtener los datos del DNI.', 'error');
         }
     });
 }
+
+
+// Array con las nacionalidades de los países de América
+const nacionalidadesAmerica = ['Peru','Venezuela', 'Bolivia',
+    'Argentina', 'Brasil', 'Canadá', 'Chile', 'Colombia', 
+    'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador', 'Guatemala', 'Haití', 
+    'Honduras', 'Jamaica', 'México', 'Nicaragua', 'Panamá', 'Paraguay', 
+    'Perú', 'República Dominicana', 'Uruguay', 'Estados Unidos'
+];
+
+// Función para cargar las nacionalidades en el select
+function cargarNacionalidades(selector, selectedNacionality = 'Perú') {
+    const select = $(selector);
+    select.empty(); // Limpiar el select
+
+    // Agregar la opción por defecto
+    select.append('<option value="">Seleccione una Nacionalidad</option>');
+
+    // Agregar las nacionalidades del array
+    nacionalidadesAmerica.forEach(function(nacionalidad) {
+        const selected = (nacionalidad === selectedNacionality) ? 'selected' : '';
+        select.append(`<option value="${nacionalidad}" ${selected}>${nacionalidad}</option>`);
+    });
+}
+
+$(document).ready(function() {
+    // Inicializar tabla de usuarios y demás eventos
+
+    // Cargar nacionalidades al abrir el modal de agregar usuario
+    $('#formularioregistros').on('show.bs.modal', function (e) {
+        cargarNacionalidades('#nacionality');  // Cargar nacionalidades en el modal de agregar
+    });
+
+    // Cargar nacionalidades al abrir el modal de actualizar usuario
+    $('#formularioActualizar').on('show.bs.modal', function (e) {
+        cargarNacionalidades('#nacionalityUpdate');  // Cargar nacionalidades en el modal de actualizar
+    });
+});

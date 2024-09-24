@@ -43,7 +43,7 @@ require 'layout/sidebar.php';
                                     <th>Empresa</th>
                                     <th>Área</th>
                                     <th>Puesto</th>
-                                    <th>Identificación</th>
+                                    <th>Usuario</th>
                                     <th>Nombre Completo</th>
                                     <th>Email</th>
                                     <th>Rol</th>
@@ -58,7 +58,7 @@ require 'layout/sidebar.php';
                                     <th>Empresa</th>
                                     <th>Área</th>
                                     <th>Puesto</th>
-                                    <th>Identificación</th>
+                                    <th>Usuario</th>
                                     <th>Nombre Completo</th>
                                     <th>Email</th>
                                     <th>Rol</th>
@@ -118,21 +118,15 @@ require 'layout/sidebar.php';
                                                     <option value="DNI">DNI</option>
                                                     <option value="Cédula">Cédula</option>
                                                     <option value="Pasaporte">Pasaporte</option>
-                                                    <!-- Añade más tipos según sea necesario -->
                                                 </select>
                                                 <div class="invalid-feedback">Seleccione un tipo de identificación.</div>
                                             </div>
-                                            <!-- Número de Identificación -->
+
+                                            <!-- Número de Identificación (Username) -->
                                             <div class="form-group col-md-6">
-                                                <label for="identification_number">Número de Identificación <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="identification_number" name="identification_number" maxlength="50" placeholder="Número de Identificación" required>
-                                                <div class="invalid-feedback" id="identification_number_feedback">Ingrese un número de identificación válido.</div>
-                                            </div>
-                                            <!-- Nombre de Usuario -->
-                                            <div class="form-group col-md-6">
-                                                <label for="username">Nombre de Usuario <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="username" name="username" maxlength="50" placeholder="Nombre de Usuario" required>
-                                                <div class="invalid-feedback" id="username_feedback">Ingrese un nombre de usuario válido.</div>
+                                                <label for="username">Número de Identificación <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="username" name="username" maxlength="50" placeholder="Número de Identificación" required>
+                                                <div class="invalid-feedback" id="username_feedback">Ingrese un Número de Identificación válido.</div>
                                             </div>
                                             <!-- Email -->
                                             <div class="form-group col-md-6">
@@ -161,8 +155,10 @@ require 'layout/sidebar.php';
                                             <!-- Nacionalidad -->
                                             <div class="form-group col-md-6">
                                                 <label for="nacionality">Nacionalidad <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="nacionality" name="nacionality" maxlength="100" placeholder="Nacionalidad" required>
-                                                <div class="invalid-feedback">Ingrese la nacionalidad.</div>
+                                                <select class="form-control" id="nacionality" name="nacionality" required>
+                                                    <!-- Opciones se cargarán dinámicamente -->
+                                                </select>
+                                                <div class="invalid-feedback">Seleccione una nacionalidad.</div>
                                             </div>
                                             <!-- Rol -->
                                             <div class="form-group col-md-6">
@@ -173,7 +169,6 @@ require 'layout/sidebar.php';
                                                     <option value="superadmin">Super Administrador</option>
                                                     <option value="adminrh">Administrador RRHH</option>
                                                     <option value="adminpr">Administrador Procura</option>
-                                                    <!-- Añade más roles según sea necesario -->
                                                 </select>
                                                 <div class="invalid-feedback">Seleccione un rol.</div>
                                             </div>
@@ -203,7 +198,6 @@ require 'layout/sidebar.php';
                     </div>
 
                     <!-- Modal para actualizar usuario -->
-                    <!-- modals/actualizar_usuario.php -->
                     <div class="modal fade" id="formularioActualizar" tabindex="-1" role="dialog" aria-labelledby="actualizarUsuarioLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg" role="document">
                             <div class="modal-content">
@@ -253,21 +247,16 @@ require 'layout/sidebar.php';
                                                     <option value="DNI">DNI</option>
                                                     <option value="Cédula">Cédula</option>
                                                     <option value="Pasaporte">Pasaporte</option>
-                                                    <!-- Añade más tipos según sea necesario -->
+                                                    <option value="Otro">Otro</option>
                                                 </select>
                                                 <div class="invalid-feedback">Seleccione un tipo de identificación.</div>
                                             </div>
-                                            <!-- Número de Identificación -->
+
+                                            <!-- Número de Identificación (Username) -->
                                             <div class="form-group col-md-6">
-                                                <label for="identification_numberUpdate">Número de Identificación <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="identification_numberUpdate" name="identification_numberUpdate" maxlength="50" placeholder="Número de Identificación" required>
-                                                <div class="invalid-feedback" id="identification_numberUpdate_feedback">Ingrese un número de identificación válido.</div>
-                                            </div>
-                                            <!-- Nombre de Usuario -->
-                                            <div class="form-group col-md-6">
-                                                <label for="usernameUpdate">Nombre de Usuario <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="usernameUpdate" name="usernameUpdate" maxlength="50" placeholder="Nombre de Usuario" required>
-                                                <div class="invalid-feedback" id="usernameUpdate_feedback">Ingrese un nombre de usuario válido.</div>
+                                                <label for="usernameUpdate">Número de Identificación (Username) <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="usernameUpdate" name="usernameUpdate" maxlength="50" placeholder="Número de Identificación" required readonly>
+                                                <div class="invalid-feedback" id="usernameUpdate_feedback">Ingrese un número de identificación válido</div>
                                             </div>
                                             <!-- Email -->
                                             <div class="form-group col-md-6">
@@ -296,8 +285,10 @@ require 'layout/sidebar.php';
                                             <!-- Nacionalidad -->
                                             <div class="form-group col-md-6">
                                                 <label for="nacionalityUpdate">Nacionalidad <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="nacionalityUpdate" name="nacionalityUpdate" maxlength="100" placeholder="Nacionalidad" required>
-                                                <div class="invalid-feedback">Ingrese la nacionalidad.</div>
+                                                <select class="form-control" id="nacionalityUpdate" name="nacionalityUpdate" required>
+                                                    <!-- Opciones se cargarán dinámicamente -->
+                                                </select>
+                                                <div class="invalid-feedback">Seleccione una nacionalidad.</div>
                                             </div>
                                             <!-- Rol -->
                                             <div class="form-group col-md-6">
@@ -308,7 +299,6 @@ require 'layout/sidebar.php';
                                                     <option value="superadmin">Super Administrador</option>
                                                     <option value="adminrh">Administrador RRHH</option>
                                                     <option value="adminpr">Administrador Procura</option>
-                                                    <!-- Añade más roles según sea necesario -->
                                                 </select>
                                                 <div class="invalid-feedback">Seleccione un rol.</div>
                                             </div>
@@ -337,11 +327,7 @@ require 'layout/sidebar.php';
                         </div>
                     </div>
 
-
-
                     <!-- Modal para ver el historial de accesos -->
-                    <!-- Modal para ver el historial de accesos -->
-                    <!-- modals/historial_accesos.php -->
                     <div class="modal fade" id="modalHistorial" tabindex="-1" role="dialog" aria-labelledby="historialAccesosLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg" role="document">
                             <div class="modal-content">

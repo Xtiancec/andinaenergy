@@ -1,6 +1,4 @@
 <?php
-// UserController.php
-
 require_once "../config/Conexion.php";
 require_once "../modelos/User.php";
 require_once "../modelos/Jobs.php";
@@ -36,7 +34,7 @@ class UserController
                 "company_name" => htmlspecialchars($reg->company_name),
                 "area_name" => htmlspecialchars($reg->area_name),
                 "position_name" => htmlspecialchars($reg->position_name),
-                "identification_number" => htmlspecialchars($reg->identification_number),
+                "username" => htmlspecialchars($reg->username),
                 "full_name" => htmlspecialchars($full_name),
                 "email" => htmlspecialchars($reg->email),
                 "role" => htmlspecialchars($reg->role),
@@ -53,7 +51,7 @@ class UserController
         // Obtener parámetros enviados por DataTables
         $draw = isset($_GET['draw']) ? intval($_GET['draw']) : 1;
         $recordsTotal = $total;
-        $recordsFiltered = $total; // Ajusta esto si implementas filtrado en el servidor
+        $recordsFiltered = $total;
 
         $results = array(
             "draw" => $draw,
@@ -65,16 +63,15 @@ class UserController
         echo json_encode($results);
     }
 
-    // Función para guardar un nuevo usuario
+    // Función para insertar un nuevo usuario
     public function insertar()
     {
         $user = new User();
-
+    
         // Recibir y limpiar los datos del formulario
         $company_id = isset($_POST["company_id"]) ? limpiarCadena($_POST["company_id"]) : "";
         $area_id = isset($_POST["area_id"]) ? limpiarCadena($_POST["area_id"]) : "";
         $identification_type = isset($_POST["identification_type"]) ? limpiarCadena($_POST["identification_type"]) : "";
-        $identification_number = isset($_POST["identification_number"]) ? limpiarCadena($_POST["identification_number"]) : "";
         $username = isset($_POST["username"]) ? limpiarCadena($_POST["username"]) : "";
         $email = isset($_POST["email"]) ? limpiarCadena($_POST["email"]) : "";
         $lastname = isset($_POST["lastname"]) ? limpiarCadena($_POST["lastname"]) : "";
@@ -84,12 +81,11 @@ class UserController
         $role = isset($_POST["role"]) ? limpiarCadena($_POST["role"]) : "";
         $job_id = isset($_POST["job_id"]) ? limpiarCadena($_POST["job_id"]) : "";
         $is_employee = isset($_POST["is_employee"]) ? limpiarCadena($_POST["is_employee"]) : 1;
-
+    
         $rspta = $user->insertar(
             $company_id,
             $area_id,
             $identification_type,
-            $identification_number,
             $username,
             $email,
             $lastname,
@@ -100,28 +96,25 @@ class UserController
             $job_id,
             $is_employee
         );
-
-        // Verificar la respuesta y retornar JSON
-        if ($rspta === "Usuario registrado correctamente.") {
-            echo json_encode(['success' => true, 'message' => $rspta]);
-        } elseif ($rspta === "Usuario creado, pero el correo no se pudo enviar.") {
+    
+        // Verificar la respuesta y enviar un mensaje adecuado
+        if ($rspta === "Usuario registrado correctamente y correo enviado.") {
             echo json_encode(['success' => true, 'message' => $rspta]);
         } else {
             echo json_encode(['success' => false, 'message' => $rspta]);
         }
     }
-
+    
     // Función para actualizar un usuario
     public function actualizar()
     {
         $user = new User();
-
+    
         // Recibir y limpiar los datos del formulario
         $id = isset($_POST["idUpdate"]) ? limpiarCadena($_POST["idUpdate"]) : "";
         $company_id = isset($_POST["company_idUpdate"]) ? limpiarCadena($_POST["company_idUpdate"]) : "";
         $area_id = isset($_POST["area_idUpdate"]) ? limpiarCadena($_POST["area_idUpdate"]) : "";
         $identification_type = isset($_POST["identification_typeUpdate"]) ? limpiarCadena($_POST["identification_typeUpdate"]) : "";
-        $identification_number = isset($_POST["identification_numberUpdate"]) ? limpiarCadena($_POST["identification_numberUpdate"]) : "";
         $username = isset($_POST["usernameUpdate"]) ? limpiarCadena($_POST["usernameUpdate"]) : "";
         $email = isset($_POST["emailUpdate"]) ? limpiarCadena($_POST["emailUpdate"]) : "";
         $lastname = isset($_POST["lastnameUpdate"]) ? limpiarCadena($_POST["lastnameUpdate"]) : "";
@@ -131,13 +124,12 @@ class UserController
         $role = isset($_POST["roleUpdate"]) ? limpiarCadena($_POST["roleUpdate"]) : "";
         $job_id = isset($_POST["job_idUpdate"]) ? limpiarCadena($_POST["job_idUpdate"]) : "";
         $is_employee = isset($_POST["is_employeeUpdate"]) ? limpiarCadena($_POST["is_employeeUpdate"]) : 1;
-
+    
         $rspta = $user->editar(
             $id,
             $company_id,
             $area_id,
             $identification_type,
-            $identification_number,
             $username,
             $email,
             $lastname,
@@ -148,27 +140,33 @@ class UserController
             $job_id,
             $is_employee
         );
-
-        // Verificar la respuesta y retornar JSON
+    
         if ($rspta === "Usuario actualizado correctamente.") {
             echo json_encode(['success' => true, 'message' => $rspta]);
         } else {
             echo json_encode(['success' => false, 'message' => $rspta]);
         }
     }
+    
 
     // Función para mostrar un usuario específico
-    public function mostrar()
-    {
-        $user = new User();
-        $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
-        $rspta = $user->mostrar($id);
-        if ($rspta) {
-            echo json_encode($rspta);
-        } else {
-            echo json_encode(null);
-        }
+// Función para mostrar un usuario específico
+public function mostrar()
+{
+    $user = new User();
+    $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
+    
+    // Ejecutar la consulta para obtener el usuario
+    $rspta = $user->mostrar($id);
+
+    // Verificar si hay un resultado válido
+    if ($rspta) {
+        echo json_encode($rspta);  // Ya que es un array asociativo, se puede convertir directamente en JSON
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Error al mostrar el usuario.']);
     }
+}
+
 
     // Función para activar un usuario
     public function activar()
@@ -252,7 +250,6 @@ class UserController
     public function obtenerHistorialAcceso()
     {
         $userId = isset($_POST['userId']) ? limpiarCadena($_POST['userId']) : "";
-
         $user = new User();
         $history = $user->obtenerHistorialAcceso($userId);
 
@@ -261,8 +258,8 @@ class UserController
         } else {
             echo json_encode(['success' => false, 'message' => 'No se pudo obtener el historial de accesos.']);
         }
-        exit();
     }
+
 
     // Función para cambiar la contraseña de un usuario
     public function cambiarPassword()
@@ -280,27 +277,23 @@ class UserController
         }
     }
 
-    // Función para verificar duplicados de identificación_number y username
+    // Función para verificar duplicados de username
     public function verificarDuplicado()
     {
         $user = new User();
-        $identification_number = isset($_POST["identification_number"]) ? limpiarCadena($_POST["identification_number"]) : "";
-        $identification_type = isset($_POST["identification_type"]) ? limpiarCadena($_POST["identification_type"]) : "";
         $username = isset($_POST["username"]) ? limpiarCadena($_POST["username"]) : "";
         $userId = isset($_POST["userId"]) ? limpiarCadena($_POST["userId"]) : null;
-
-        // Verificar si identification_number ya existe
-        $identificacionExiste = $user->verificarDuplicadoIdentificationNumber($identification_number, $identification_type, $userId);
-
-        // Verificar si username ya existe
+    
+        // Verificar si username ya existe, excepto para el usuario actual (cuando es actualización)
         $usernameExiste = $user->verificarDuplicadoUsername($username, $userId);
-
-        // Responder con claves claras
-        echo json_encode([
-            'existsIdentificationNumber' => $identificacionExiste,
-            'existsUsername' => $usernameExiste
-        ]);
+    
+        if ($usernameExiste) {
+            echo json_encode(['existsUsername' => true]);
+        } else {
+            echo json_encode(['existsUsername' => false]);
+        }
     }
+    
 }
 
 // Manejo de operaciones
@@ -351,4 +344,3 @@ if (isset($_GET['op'])) {
             break;
     }
 }
-?>
