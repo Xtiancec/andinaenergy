@@ -99,7 +99,8 @@ if (isset($_SESSION['user_type'])) {
                     </div>
                     <div class="form-group">
                         <div class="col-xs-12">
-                            <input class="form-control" id="clavea" name="clavea" type="password" required placeholder="Contraseña" autocomplete="current-password">
+                            <!-- Cambiado el ID a 'password' -->
+                            <input class="form-control" id="password" name="password" type="password" required placeholder="Contraseña" autocomplete="current-password">
                         </div>
                     </div>
                     <div class="form-group row">

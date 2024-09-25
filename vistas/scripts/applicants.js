@@ -60,6 +60,7 @@ function init() {
         }
     });
 
+    // Manejar el cambio en el select de empresa para agregar postulante
     $("#company_id").on("change", function () {
         var companyId = $(this).val();
         if (companyId) {
@@ -81,6 +82,7 @@ function init() {
         }
     });
 
+    // Manejar el cambio en el select de área para agregar postulante
     $("#area_id").on("change", function () {
         var areaId = $(this).val();
         if (areaId) {
@@ -99,7 +101,6 @@ function init() {
             $('#job_idUpdate').html('<option value="">Seleccione un Puesto de Trabajo</option>');
         }
     });
-    
 }
 
 // Inicializar validación de formularios usando Bootstrap
@@ -167,7 +168,7 @@ function listar() {
         ],
         "order": [[0, "desc"]],
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json"
+            "url": "https://cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json" // Cambiado a HTTPS
         },
         "pageLength": 10,
         "responsive": true,
@@ -182,7 +183,7 @@ function guardar(e) {
     // Verificar si el formulario es válido
     let form = document.getElementById('formulario');
     if (form.checkValidity() === false) {
-        event.stopPropagation();
+        e.stopPropagation();
         form.classList.add('was-validated');
         return;
     }
@@ -234,7 +235,7 @@ function actualizar(e) {
     // Verificar si el formulario es válido
     let form = document.getElementById('formActualizar');
     if (form.checkValidity() === false) {
-        event.stopPropagation();
+        e.stopPropagation();
         form.classList.add('was-validated');
         return;
     }
@@ -290,7 +291,7 @@ function desactivar(id) {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            $.post('../controlador/ApplicantController.php?op=desactivar', { id: id }, function (response) {
+            $.post('../controlador/ApplicantController.php?op=desactivar',  function (response) {
                 if (response.status === "success") {
                     Swal.fire('Desactivado', response.message, 'success');
                     tabla.ajax.reload(null, false);
@@ -315,7 +316,7 @@ function activar(id) {
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            $.post('../controlador/ApplicantController.php?op=activar', { id: id }, function (response) {
+            $.post('../controlador/ApplicantController.php?op=activar',  function (response) {
                 if (response.status === "success") {
                     Swal.fire('Activado', response.message, 'success');
                     tabla.ajax.reload(null, false);
@@ -334,7 +335,7 @@ function mostrar(id) {
     $.ajax({
         url: "../controlador/ApplicantController.php?op=mostrar",
         type: "POST",
-        data: { id: id },
+        data: { id: id},
         dataType: "json",
         success: function (response) {
             if (response.status === "success") {
@@ -342,8 +343,8 @@ function mostrar(id) {
                 $("#formularioActualizar").modal("show");
 
                 cargarEmpresas("#company_idUpdate", data.company_id);
-                cargarAreas("#area_idUpdate", data.company_id, data.area_id);
-                cargarPuestos("#job_idUpdate", data.area_id, data.job_id);
+                cargarAreasPorEmpresa(data.company_id, "#area_idUpdate", data.area_id);
+                cargarPuestosPorArea(data.area_id, "#job_idUpdate", data.job_id);
 
                 $("#idUpdate").val(data.id);
                 $("#usernameUpdate").val(data.username);
@@ -368,12 +369,17 @@ function cargarEmpresas(selector, selectedId = null) {
         url: "../controlador/ApplicantController.php?op=listarEmpresas",
         type: "GET",
         dataType: "json",
-        success: function (data) {
-            let options = "<option value=''>Seleccione una Empresa</option>";
-            data.forEach(empresa => {
-                options += `<option value="${empresa.id}" ${selectedId == empresa.id ? 'selected' : ''}>${empresa.company_name}</option>`;
-            });
-            $(selector).html(options);
+        success: function (response) {
+            if (response.status === "success") {
+                let options = "<option value=''>Seleccione una Empresa</option>";
+                response.data.forEach(empresa => {
+                    options += `<option value="${empresa.id}" ${selectedId == empresa.id ? 'selected' : ''}>${empresa.company_name}</option>`;
+                });
+                $(selector).html(options);
+            } else {
+                console.error("Error cargando empresas:", response.message);
+                mostrarToast("Error al cargar las empresas.", "error");
+            }
         },
         error: function (e) {
             console.error("Error cargando empresas:", e.responseText);
@@ -382,23 +388,39 @@ function cargarEmpresas(selector, selectedId = null) {
     });
 }
 
-function cargarAreasPorEmpresa(companyId, selector) {
+// Función para cargar áreas por empresa
+function cargarAreasPorEmpresa(companyId, selector, selectedAreaId = null) {
+    if (!companyId) {
+        $(selector).html('<option value="">Seleccione un Área</option>');
+        if (selector === "#area_idUpdate") {
+            $('#job_idUpdate').html('<option value="">Seleccione un Puesto de Trabajo</option>');
+        } else {
+            $('#job_id').html('<option value="">Seleccione un Puesto de Trabajo</option>');
+        }
+        return;
+    }
+
     $.ajax({
         url: "../controlador/ApplicantController.php?op=listarAreasPorEmpresa",
         type: "POST",
         data: { company_id: companyId },
         dataType: "json",
-        success: function (data) {
-            let options = "<option value=''>Seleccione un Área</option>";
-            data.forEach(area => {
-                options += `<option value="${area.id}">${area.area_name}</option>`;
-            });
-            $(selector).html(options);
-            // Resetear los puestos de trabajo
-            if (selector === "#area_id") {
-                $('#job_id').html('<option value="">Seleccione un Puesto de Trabajo</option>');
-            } else if (selector === "#area_idUpdate") {
-                $('#job_idUpdate').html('<option value="">Seleccione un Puesto de Trabajo</option>');
+        success: function (response) {
+            if (response.status === "success") {
+                let options = "<option value=''>Seleccione un Área</option>";
+                response.data.forEach(area => {
+                    options += `<option value="${area.id}" ${selectedAreaId == area.id ? 'selected' : ''}>${area.area_name}</option>`;
+                });
+                $(selector).html(options);
+                // Resetear los puestos de trabajo
+                if (selector === "#area_id") {
+                    $('#job_id').html('<option value="">Seleccione un Puesto de Trabajo</option>');
+                } else if (selector === "#area_idUpdate") {
+                    $('#job_idUpdate').html('<option value="">Seleccione un Puesto de Trabajo</option>');
+                }
+            } else {
+                console.error("Error cargando áreas:", response.message);
+                mostrarToast("Error al cargar las áreas.", "error");
             }
         },
         error: function (e) {
@@ -409,18 +431,28 @@ function cargarAreasPorEmpresa(companyId, selector) {
 }
 
 // Función para cargar puestos por área
-function cargarPuestosPorArea(areaId, selector) {
+function cargarPuestosPorArea(areaId, selector, selectedJobId = null) {
+    if (!areaId) {
+        $(selector).html('<option value="">Seleccione un Puesto de Trabajo</option>');
+        return;
+    }
+
     $.ajax({
         url: "../controlador/ApplicantController.php?op=listarPuestosPorArea",
         type: "POST",
         data: { area_id: areaId },
         dataType: "json",
-        success: function (data) {
-            let options = "<option value=''>Seleccione un Puesto de Trabajo</option>";
-            data.forEach(puesto => {
-                options += `<option value="${puesto.id}">${puesto.position_name}</option>`;
-            });
-            $(selector).html(options);
+        success: function (response) {
+            if (response.status === "success") {
+                let options = "<option value=''>Seleccione un Puesto de Trabajo</option>";
+                response.data.forEach(puesto => {
+                    options += `<option value="${puesto.id}" ${selectedJobId == puesto.id ? 'selected' : ''}>${puesto.position_name}</option>`;
+                });
+                $(selector).html(options);
+            } else {
+                console.error("Error cargando puestos de trabajo:", response.message);
+                mostrarToast("Error al cargar los puestos de trabajo.", "error");
+            }
         },
         error: function (e) {
             console.error("Error cargando puestos de trabajo:", e.responseText);
@@ -523,4 +555,24 @@ function mostrarToast(mensaje, tipo) {
         backgroundColor: color,
         className: "toast-progress",        
     }).showToast();
+}
+
+
+
+// Inicializar validación de formularios usando Bootstrap
+function inicializarValidacionFormularios() {
+    // Seleccionar todos los formularios que necesiten validación
+    var forms = document.querySelectorAll('.needs-validation');
+
+    // Iterar sobre ellos y prevenir el envío si no son válidos
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            form.classList.add('was-validated');
+        }, false);
+    });
 }

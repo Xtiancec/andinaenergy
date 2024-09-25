@@ -79,7 +79,7 @@ require 'layout/sidebar.php';
                                     <div class="form-row">
                                         <div class="form-group col-md-6">
                                             <label for="company_id">Empresa <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="company_id" name="company_id" required onchange="cargarAreasPorEmpresa(this.value);">
+                                            <select class="form-control" id="company_id" name="company_id" required>
                                                 <option value="">Seleccione una Empresa</option>
                                                 <!-- Opciones cargadas dinámicamente -->
                                             </select>
@@ -89,7 +89,7 @@ require 'layout/sidebar.php';
                                         </div>
                                         <div class="form-group col-md-6">
                                             <label for="area_id">Área <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="area_id" name="area_id" required onchange="cargarPuestosPorArea(this.value);">
+                                            <select class="form-control" id="area_id" name="area_id" required>
                                                 <option value="">Seleccione un Área</option>
                                                 <!-- Opciones cargadas dinámicamente -->
                                             </select>
@@ -109,7 +109,7 @@ require 'layout/sidebar.php';
                                         </div>
                                         <div class="form-group col-md-6">
                                             <label for="username">DNI <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="username" name="username" maxlength="8" placeholder="Ingrese DNI" required pattern="\d{8}">
+                                            <input type="text" class="form-control" id="username" name="username" maxlength="8 placeholder="Ingrese DNI" required pattern="\d{8}">
                                             <div class="invalid-feedback">
                                                 Por favor, ingrese un DNI válido de 8 dígitos.
                                             </div>
@@ -152,7 +152,6 @@ require 'layout/sidebar.php';
                         </div>
                     </div>
                 </div>
-
                 <!-- Modal para actualizar postulante -->
                 <div class="modal fade" id="formularioActualizar" tabindex="-1" role="dialog" aria-labelledby="modalActualizarLabel" aria-hidden="true">
                     <div class="modal-dialog modal-lg" role="document">
@@ -169,7 +168,7 @@ require 'layout/sidebar.php';
                                     <div class="form-row">
                                         <div class="form-group col-md-6">
                                             <label for="company_idUpdate">Empresa <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="company_idUpdate" name="company_idUpdate" required onchange="cargarAreasPorEmpresaUpdate(this.value);">
+                                            <select class="form-control" id="company_idUpdate" name="company_idUpdate" required>
                                                 <option value="">Seleccione una Empresa</option>
                                                 <!-- Opciones cargadas dinámicamente -->
                                             </select>
@@ -179,7 +178,7 @@ require 'layout/sidebar.php';
                                         </div>
                                         <div class="form-group col-md-6">
                                             <label for="area_idUpdate">Área <span class="text-danger">*</span></label>
-                                            <select class="form-control" id="area_idUpdate" name="area_idUpdate" required onchange="cargarPuestosPorAreaUpdate(this.value);">
+                                            <select class="form-control" id="area_idUpdate" name="area_idUpdate" required>
                                                 <option value="">Seleccione un Área</option>
                                                 <!-- Opciones cargadas dinámicamente -->
                                             </select>
@@ -233,6 +232,7 @@ require 'layout/sidebar.php';
                                                 Por favor, ingrese un email válido.
                                             </div>
                                         </div>
+                                        
                                     </div>
                                 </div>
                                 <div class="modal-footer">

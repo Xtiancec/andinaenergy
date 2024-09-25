@@ -1,214 +1,228 @@
-var tabla;
-
 $(document).ready(function () {
     Init();
 });
 
+let tabla;
+
+// Función de Inicialización
 function Init() {
     listar();
+    // Asignar eventos a botones
+    $('#btnGuardar').click(guardar);
+    $('#btnActualizar').click(actualizar);
 }
 
-// Función listar
+// Función para listar los documentos
 function listar() {
-    tabla = $('#tbllistado').dataTable({
-        dom: '<"row"<"col-md-12"<"row"<"col-md-6"B><"col-md-6"f>>>><"col-md-12"rt><"col-md-12"<"row"<"col-md-5"i><"col-md-7"p>>>',
-        buttons: [
-            { extend: 'copy', className: 'btn' },
-            { extend: 'pdf', className: 'btn' },
-            { extend: 'excel', className: 'btn' },
-            { extend: 'print', className: 'btn' },
-            { extend: 'csv', className: 'btn' }
-        ],
-        "oLanguage": {
-            "oPaginate": { "sPrevious": '<svg...></svg>', "sNext": '<svg...></svg>' },
-            "sInfo": "Mostrando página _PAGE_ de _PAGES_",
-            "sSearch": '<svg...></svg>',
-            "sSearchPlaceholder": "Buscar...",
-            "sLengthMenu": "Results :  _MENU_",
-        },
-        "displayLength": 10,
-        "lengthMenu": [10, 10, 20, 50],
-       
+    tabla = $('#tbllistado').DataTable({
         "ajax": {
             url: '../controlador/DocumentNameController.php?op=listar',
-            type: "get",
+            type: "GET",
             dataType: "json",
             error: function (e) {
-                console.log(e.responseText);
+                console.error("Error al cargar los datos:", e.responseText);
             }
         },
-        "bDestroy": true,
-        "order": [[0, "desc"]] // Ordenar (columna, orden)
-    }).DataTable();
-}
-
-
-
-
-
-function mostrar(id) {
-    $.post('../controlador/DocumentNameController.php?op=mostrar', { id: id }, function (data) {
-        data = JSON.parse(data);
-        $('#idUpdate').val(data.id);
-        $('#documentNameUpdate').val(data.documentName);
-        $('#formularioActualizar').modal('show'); // Mostrar el modal de actualización
+        "columns": [
+            { "data": "0" },
+            { "data": "1" },
+            { "data": "2" },
+            { "data": "3" },
+            { "data": "4" },
+            { "data": "5" }
+        ],
+        "language": {
+            "paginate": {
+                "previous": '<svg...></svg>',
+                "next": '<svg...></svg>'
+            },
+            "info": "Mostrando página _PAGE_ de _PAGES_",
+            "search": '<svg...></svg>',
+            "searchPlaceholder": "Buscar...",
+            "lengthMenu": "Resultados :  _MENU_",
+        },
+        "pageLength": 10,
+        "lengthMenu": [10, 20, 50],
+        "destroy": true,
+        "order": [[0, "desc"]],
+        "dom": '<"row"<"col-md-12"<"row"<"col-md-6"B><"col-md-6"f>>>><"col-md-12"rt><"col-md-12"<"row"<"col-md-5"i><"col-md-7"p>>>',
+        "buttons": [
+            { extend: 'copy', className: 'btn btn-secondary' },
+            { extend: 'pdf', className: 'btn btn-secondary' },
+            { extend: 'excel', className: 'btn btn-secondary' },
+            { extend: 'print', className: 'btn btn-secondary' },
+            { extend: 'csv', className: 'btn btn-secondary' }
+        ]
     });
 }
 
-function guardar() {
-    var documentName = $('#documentName').val();
+// Función para mostrar los datos en el modal de actualización
+function mostrar(id) {
+    $.post('../controlador/DocumentNameController.php?op=mostrar', { id: id }, function (data) {
+        const result = JSON.parse(data);
+        if (result) {
+            $('#idUpdate').val(result.id);
+            $('#documentNameUpdate').val(result.documentName);
+            $('#formularioActualizar').modal('show');
+        } else {
+            showToast("No se pudo obtener los datos del documento.", "error");
+        }
+    }).fail(function () {
+        showToast("Error en la solicitud de datos.", "error");
+    });
+}
 
-    if (documentName.trim() === "") {
-        Toastify({
-            text: "Complete todos los campos requeridos",
-            duration: 3000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            backgroundColor: "#ffc107",
-            className: "toast-progress",
-        }).showToast();
+// Función para guardar un nuevo documento
+function guardar() {
+    const documentName = $('#documentName').val().trim();
+
+    if (documentName === "") {
+        showToast("Complete todos los campos requeridos.", "warning");
         return;
     }
 
     $.post('../controlador/DocumentNameController.php?op=guardar', { documentName: documentName }, function (response) {
-        if (response === "Datos registrados correctamente") {
+        if (response.includes("correctamente")) {
             $('#formularioregistros').modal('hide');
-            Toastify({
-                text: response,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "#28a745",
-                className: "toast-progress",
-            }).showToast();
-            $('#tbllistado').DataTable().ajax.reload(); // Recargar la tabla
+            showToast(response, "success");
+            tabla.ajax.reload();
+            $('#formulario')[0].reset();
         } else {
-            Toastify({
-                text: response,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "#dc3545",
-                className: "toast-progress",
-            }).showToast();
+            showToast(response, "error");
         }
+    }).fail(function () {
+        showToast("Error al guardar el documento.", "error");
     });
 }
 
+// Función para actualizar un documento existente
 function actualizar() {
-    var id = $('#idUpdate').val();
-    var documentName = $('#documentNameUpdate').val();
+    const id = $('#idUpdate').val();
+    const documentName = $('#documentNameUpdate').val().trim();
+
+    if (documentName === "") {
+        showToast("Complete todos los campos requeridos.", "warning");
+        return;
+    }
 
     $.post('../controlador/DocumentNameController.php?op=editar', { id: id, documentName: documentName }, function (response) {
-        if (response === "Datos actualizados correctamente") {
+        if (response.includes("correctamente")) {
             $('#formularioActualizar').modal('hide');
-            Toastify({
-                text: response,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "#28a745",
-                className: "toast-progress",
-            }).showToast();
-            $('#tbllistado').DataTable().ajax.reload(); // Recargar la tabla
+            showToast(response, "success");
+            tabla.ajax.reload();
+            $('#formActualizar')[0].reset();
         } else {
-            Toastify({
-                text: response,
-                duration: 3000,
-                close: true,
-                gravity: "top",
-                position: "right",
-                backgroundColor: "#dc3545",
-                className: "toast-progress",
-            }).showToast();
+            showToast(response, "error");
         }
+    }).fail(function () {
+        showToast("Error al actualizar el documento.", "error");
     });
 }
 
+// Asignar eventos a los botones dinámicos
 $(document).on('click', '.btn-edit', function () {
-    var id = $(this).data('id');
+    const id = $(this).data('id');
     mostrar(id);
 });
 
-// Configurar eventos para los botones
-$(document).on('click', '.btn-edit', function () {
-    var id = $(this).data('id');
-    mostrar(id);
-});
 $(document).on('click', '.btn-desactivar', function () {
-    var id = $(this).data('id');
+    const id = $(this).data('id');
     confirmarEliminacion(id);
 });
+
 $(document).on('click', '.btn-activar', function () {
-    var id = $(this).data('id');
+    const id = $(this).data('id');
     confirmarActivacion(id);
 });
 
-// Función para confirmar eliminación usando SweetAlert2
+// Función para mostrar notificaciones
+function showToast(message, type) {
+    let bgColor = "#17a2b8"; // Default color
+    switch (type) {
+        case "success":
+            bgColor = "#28a745";
+            break;
+        case "error":
+            bgColor = "#dc3545";
+            break;
+        case "warning":
+            bgColor = "#ffc107";
+            break;
+        default:
+            bgColor = "#17a2b8";
+    }
+
+    Toastify({
+        text: message,
+        duration: 3000,
+        close: true,
+        gravity: "top",
+        position: "right",
+        backgroundColor: bgColor,
+        className: "toast-progress",
+    }).showToast();
+}
+
+// Función para confirmar desactivación usando SweetAlert2
 function confirmarEliminacion(id) {
     Swal.fire({
-        title: '¿Está seguro de eliminar el registro?',
+        title: '¿Está seguro de desactivar el registro?',
         text: "¡Este registro se dará de baja hasta que se vuelva a activar!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#DD6B55',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, ¡elimínalo!',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, ¡desactívalo!',
         cancelButtonText: 'No, cancelar',
     }).then((result) => {
         if (result.isConfirmed) {
             desactivar(id);
-            Swal.fire('Eliminado', 'El registro fue eliminado', 'success');
-            $('#tbllistado').DataTable().ajax.reload();
         }
     });
 }
 
+// Función para desactivar un documento
 function desactivar(id) {
     $.post('../controlador/DocumentNameController.php?op=desactivar', { id: id }, function (response) {
         if (response.includes("correctamente")) {
-            Swal.fire('Desactivado', 'El registro fue desactivado correctamente.', 'success');
-            tabla.ajax.reload(null, false); // Recargar la tabla sin reiniciar la paginación
+            showToast(response, "success");
+            tabla.ajax.reload(null, false);
         } else {
-            Swal.fire('Error', 'No se pudo desactivar el registro.', 'error');
+            showToast(response, "error");
         }
     }).fail(function () {
-        Swal.fire('Error', 'Hubo un problema en el servidor.', 'error');
+        showToast("Error al desactivar el documento.", "error");
     });
 }
 
+// Función para confirmar activación usando SweetAlert2
 function confirmarActivacion(id) {
     Swal.fire({
         title: '¿Está seguro de activar el registro?',
-        text: "Este registro se activará",
+        text: "Este registro se activará nuevamente.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#002A52E',
-        cancelButtonColor: '#d33',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
         confirmButtonText: 'Sí, ¡actívalo!',
         cancelButtonText: 'No, cancelar',
     }).then((result) => {
         if (result.isConfirmed) {
             activar(id);
-            Swal.fire('Activado', 'El registro fue activado', 'success');
-            $('#tbllistado').DataTable().ajax.reload();
         }
     });
 }
 
+// Función para activar un documento
 function activar(id) {
     $.post('../controlador/DocumentNameController.php?op=activar', { id: id }, function (response) {
         if (response.includes("correctamente")) {
-            Swal.fire('Activado', 'El registro fue activado correctamente.', 'success');
-            tabla.ajax.reload(null, false); // Recargar la tabla sin reiniciar la paginación
+            showToast(response, "success");
+            tabla.ajax.reload(null, false);
         } else {
-            Swal.fire('Error', 'No se pudo activar el registro.', 'error');
+            showToast(response, "error");
         }
     }).fail(function () {
-        Swal.fire('Error', 'Hubo un problema en el servidor.', 'error');
+        showToast("Error al activar el documento.", "error");
     });
 }

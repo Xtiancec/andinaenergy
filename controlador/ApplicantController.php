@@ -3,7 +3,7 @@ require_once "../modelos/Applicant.php";
 
 class ApplicantController
 {
-    // Guardar o actualizar postulante
+    // Guardar un nuevo postulante
     public function guardar()
     {
         // Iniciar sesión si no está iniciada
@@ -11,26 +11,39 @@ class ApplicantController
             session_start();
         }
     
-        // Verificar el token CSRF si lo implementaste
-        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-            echo json_encode(['status' => 'error', 'message' => 'Token CSRF inválido.']);
+        $applicant = new Applicant();
+    
+        // Sanitizar entradas
+        $company_id = limpiarCadena($_POST["company_id"] ?? "");
+        $area_id = limpiarCadena($_POST["area_id"] ?? "");
+        $job_id = limpiarCadena($_POST["job_id"] ?? "");
+        $username = limpiarCadena($_POST["username"] ?? "");
+        $email = limpiarCadena($_POST["email"] ?? "");
+        $lastname = limpiarCadena($_POST["lastname"] ?? "");
+        $surname = limpiarCadena($_POST["surname"] ?? "");
+        $names = limpiarCadena($_POST["names"] ?? "");
+    
+        // Validación de campos vacíos
+        if (empty($company_id) || empty($area_id) || empty($job_id) || empty($username) || empty($email) || empty($lastname) || empty($surname) || empty($names)) {
+            echo json_encode(['status' => 'error', 'message' => 'Todos los campos son obligatorios.']);
             exit;
         }
     
-        $applicant = new Applicant();
+        // Validación de formato DNI
+        if (!preg_match('/^\d{8}$/', $username)) {
+            echo json_encode(['status' => 'error', 'message' => 'El DNI debe contener exactamente 8 dígitos.']);
+            exit;
+        }
     
-        $company_id = isset($_POST["company_id"]) ? limpiarCadena($_POST["company_id"]) : "";
-        $area_id = isset($_POST["area_id"]) ? limpiarCadena($_POST["area_id"]) : "";
-        $job_id = isset($_POST["job_id"]) ? limpiarCadena($_POST["job_id"]) : "";
-        $username = isset($_POST["username"]) ? limpiarCadena($_POST["username"]) : "";
-        $email = isset($_POST["email"]) ? limpiarCadena($_POST["email"]) : "";
-        $lastname = isset($_POST["lastname"]) ? limpiarCadena($_POST["lastname"]) : "";
-        $surname = isset($_POST["surname"]) ? limpiarCadena($_POST["surname"]) : "";
-        $names = isset($_POST["names"]) ? limpiarCadena($_POST["names"]) : "";
+        // Validación de formato Email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['status' => 'error', 'message' => 'El email ingresado no es válido.']);
+            exit;
+        }
     
-        // Validación adicional en el servidor
-        if (empty($company_id) || empty($area_id) || empty($job_id) || empty($username) || empty($email) || empty($lastname) || empty($surname) || empty($names)) {
-            echo json_encode(['status' => 'error', 'message' => 'Todos los campos son obligatorios.']);
+        // Validación de longitud de nombres
+        if (strlen($lastname) > 100 || strlen($surname) > 100 || strlen($names) > 100) {
+            echo json_encode(['status' => 'error', 'message' => 'Los apellidos y nombres no deben exceder los 100 caracteres.']);
             exit;
         }
     
@@ -46,42 +59,88 @@ class ApplicantController
         }
     }
     
+
     // Función para listar los puestos por área
     public function listarPuestosPorArea()
     {
         $applicant = new Applicant();
         $area_id = isset($_POST["area_id"]) ? limpiarCadena($_POST["area_id"]) : "";
+        if (empty($area_id)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID del área no especificado.']);
+            exit;
+        }
         $rspta = $applicant->listarPuestosPorArea($area_id);
-        echo json_encode($rspta->fetch_all(MYSQLI_ASSOC));
+        $puestos = $rspta->fetch_all(MYSQLI_ASSOC);
+        echo json_encode(['status' => 'success', 'data' => $puestos]);
     }
 
+    // Función para editar un postulante
     public function editar()
     {
         $applicant = new Applicant();
-
-        $id = isset($_POST["idUpdate"]) ? limpiarCadena($_POST["idUpdate"]) : "";
-        $company_id = isset($_POST["company_idUpdate"]) ? limpiarCadena($_POST["company_idUpdate"]) : "";
-        $area_id = isset($_POST["area_idUpdate"]) ? limpiarCadena($_POST["area_idUpdate"]) : ""; // Se agrega el campo area_id
-        $job_id = isset($_POST["job_idUpdate"]) ? limpiarCadena($_POST["job_idUpdate"]) : "";
-        $username = isset($_POST["usernameUpdate"]) ? limpiarCadena($_POST["usernameUpdate"]) : "";
-        $email = isset($_POST["emailUpdate"]) ? limpiarCadena($_POST["emailUpdate"]) : "";
-        $lastname = isset($_POST["lastnameUpdate"]) ? limpiarCadena($_POST["lastnameUpdate"]) : "";
-        $surname = isset($_POST["surnameUpdate"]) ? limpiarCadena($_POST["surnameUpdate"]) : "";
-        $names = isset($_POST["namesUpdate"]) ? limpiarCadena($_POST["namesUpdate"]) : "";
-
-        // Ejecutar actualización con area_id
+    
+        // Sanitizar entradas
+        $id = limpiarCadena($_POST["idUpdate"] ?? "");
+        $company_id = limpiarCadena($_POST["company_idUpdate"] ?? "");
+        $area_id = limpiarCadena($_POST["area_idUpdate"] ?? "");
+        $job_id = limpiarCadena($_POST["job_idUpdate"] ?? "");
+        $username = limpiarCadena($_POST["usernameUpdate"] ?? "");
+        $email = limpiarCadena($_POST["emailUpdate"] ?? "");
+        $lastname = limpiarCadena($_POST["lastnameUpdate"] ?? "");
+        $surname = limpiarCadena($_POST["surnameUpdate"] ?? "");
+        $names = limpiarCadena($_POST["namesUpdate"] ?? "");
+    
+        // Validación de campos vacíos
+        if (empty($id) || empty($company_id) || empty($area_id) || empty($job_id) || empty($username) || empty($email) || empty($lastname) || empty($surname) || empty($names)) {
+            echo json_encode(['status' => 'error', 'message' => 'Todos los campos son obligatorios.']);
+            exit;
+        }
+    
+        // Validación de formato DNI
+        if (!preg_match('/^\d{8}$/', $username)) {
+            echo json_encode(['status' => 'error', 'message' => 'El DNI debe contener exactamente 8 dígitos.']);
+            exit;
+        }
+    
+        // Validación de formato Email
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            echo json_encode(['status' => 'error', 'message' => 'El email ingresado no es válido.']);
+            exit;
+        }
+    
+        // Validación de longitud de nombres
+        if (strlen($lastname) > 100 || strlen($surname) > 100 || strlen($names) > 100) {
+            echo json_encode(['status' => 'error', 'message' => 'Los apellidos y nombres no deben exceder los 100 caracteres.']);
+            exit;
+        }
+    
+        // Actualizar el postulante
         $rspta = $applicant->editar($id, $company_id, $area_id, $job_id, $username, $email, $lastname, $surname, $names);
-
-        echo $rspta ? "Postulante actualizado correctamente" : "Error al actualizar el postulante";
+        if ($rspta) {
+            echo json_encode(['status' => 'success', 'message' => 'Postulante actualizado correctamente.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Error al actualizar el postulante.']);
+        }
     }
+    
 
     // Función para mostrar los datos de un postulante
     public function mostrar()
     {
         $applicant = new Applicant();
         $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
+
+        if (empty($id)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID del postulante no especificado.']);
+            exit;
+        }
+
         $rspta = $applicant->mostrar($id);
-        echo json_encode($rspta);
+        if ($rspta) {
+            echo json_encode(['status' => 'success', 'data' => $rspta]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Postulante no encontrado.']);
+        }
     }
 
     // Función para listar los postulantes
@@ -116,23 +175,47 @@ class ApplicantController
         echo json_encode($results);
     }
 
-
     // Función para desactivar postulante
     public function desactivar()
     {
+        // Iniciar sesión si no está iniciada
+
+
         $applicant = new Applicant();
         $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
+
+        if (empty($id)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID del postulante no especificado.']);
+            exit;
+        }
+
         $rspta = $applicant->desactivar($id);
-        echo $rspta ? "Postulante desactivado correctamente" : "No se pudo desactivar el postulante";
+        if ($rspta) {
+            echo json_encode(['status' => 'success', 'message' => 'Postulante desactivado correctamente.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No se pudo desactivar el postulante.']);
+        }
     }
 
     // Función para activar postulante
     public function activar()
     {
+ 
+
         $applicant = new Applicant();
         $id = isset($_POST["id"]) ? limpiarCadena($_POST["id"]) : "";
+
+        if (empty($id)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID del postulante no especificado.']);
+            exit;
+        }
+
         $rspta = $applicant->activar($id);
-        echo $rspta ? "Postulante activado correctamente" : "No se pudo activar el postulante";
+        if ($rspta) {
+            echo json_encode(['status' => 'success', 'message' => 'Postulante activado correctamente.']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No se pudo activar el postulante.']);
+        }
     }
 
     // Función para listar todas las empresas
@@ -140,7 +223,8 @@ class ApplicantController
     {
         $applicant = new Applicant();
         $rspta = $applicant->listarEmpresas();
-        echo json_encode($rspta->fetch_all(MYSQLI_ASSOC));
+        $empresas = $rspta->fetch_all(MYSQLI_ASSOC);
+        echo json_encode(['status' => 'success', 'data' => $empresas]);
     }
 
     // Función para listar todas las áreas por empresa
@@ -148,8 +232,13 @@ class ApplicantController
     {
         $applicant = new Applicant();
         $company_id = isset($_POST["company_id"]) ? limpiarCadena($_POST["company_id"]) : "";
+        if (empty($company_id)) {
+            echo json_encode(['status' => 'error', 'message' => 'ID de la empresa no especificado.']);
+            exit;
+        }
         $rspta = $applicant->listarAreasPorEmpresa($company_id);
-        echo json_encode($rspta->fetch_all(MYSQLI_ASSOC));
+        $areas = $rspta->fetch_all(MYSQLI_ASSOC);
+        echo json_encode(['status' => 'success', 'data' => $areas]);
     }
 
     // Función para listar todos los puestos activos
@@ -157,10 +246,15 @@ class ApplicantController
     {
         $applicant = new Applicant();
         $rspta = $applicant->listarPuestosActivos();
-        echo json_encode($rspta->fetch_all(MYSQLI_ASSOC));
+        $puestos = $rspta->fetch_all(MYSQLI_ASSOC);
+        echo json_encode(['status' => 'success', 'data' => $puestos]);
     }
+
+    // Función para listar puestos por área
+
 }
 
+// Instancia y llamada a métodos según la operación
 if (isset($_GET["op"])) {
     $controller = new ApplicantController();
     switch ($_GET["op"]) {
@@ -194,5 +288,9 @@ if (isset($_GET["op"])) {
         case 'listarPuestosPorArea':
             $controller->listarPuestosPorArea();
             break;
+        default:
+            echo json_encode(['status' => 'error', 'message' => 'Operación no válida.']);
+            break;
     }
 }
+?>

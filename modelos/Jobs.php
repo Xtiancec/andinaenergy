@@ -3,7 +3,6 @@ require_once '../config/Conexion.php';
 
 class Jobs
 {
-
     // Método para insertar un nuevo puesto de trabajo
     public function insertar($position_name, $area_id)
     {
@@ -11,14 +10,16 @@ class Jobs
         $area_id = limpiarCadena($area_id);
 
         // Verificar si el puesto ya existe en el área
-        $sql_verificar = "SELECT id FROM jobs WHERE position_name = '$position_name' AND area_id = '$area_id'";
-        $rspta_verificar = ejecutarConsulta($sql_verificar);
+        $sql_verificar = "SELECT id FROM jobs WHERE position_name = ? AND area_id = ?";
+        $params_verificar = [$position_name, $area_id];
+        $rspta_verificar = ejecutarConsulta($sql_verificar, $params_verificar);
         if ($rspta_verificar && $rspta_verificar->num_rows > 0) {
             return false; // Puesto ya existe
         }
 
-        $sql = "INSERT INTO jobs (position_name, area_id) VALUES ('$position_name', '$area_id')";
-        return ejecutarConsulta($sql);
+        $sql = "INSERT INTO jobs (position_name, area_id) VALUES (?, ?)";
+        $params = [$position_name, $area_id];
+        return ejecutarConsulta($sql, $params);
     }
 
     // Método para editar un puesto de trabajo existente
@@ -29,30 +30,34 @@ class Jobs
         $area_id = limpiarCadena($area_id);
 
         // Verificar si el puesto ya existe en el área
-        $sql_verificar = "SELECT id FROM jobs WHERE position_name = '$position_name' AND area_id = '$area_id' AND id != '$id'";
-        $rspta_verificar = ejecutarConsulta($sql_verificar);
+        $sql_verificar = "SELECT id FROM jobs WHERE position_name = ? AND area_id = ? AND id != ?";
+        $params_verificar = [$position_name, $area_id, $id];
+        $rspta_verificar = ejecutarConsulta($sql_verificar, $params_verificar);
         if ($rspta_verificar && $rspta_verificar->num_rows > 0) {
             return false; // Puesto ya existe en otra entrada
         }
 
-        $sql = "UPDATE jobs SET position_name = '$position_name', area_id = '$area_id' WHERE id = '$id'";
-        return ejecutarConsulta($sql);
+        $sql = "UPDATE jobs SET position_name = ?, area_id = ? WHERE id = ?";
+        $params = [$position_name, $area_id, $id];
+        return ejecutarConsulta($sql, $params);
     }
 
     // Método para desactivar un puesto de trabajo
     public function desactivar($id)
     {
         $id = limpiarCadena($id);
-        $sql = "UPDATE jobs SET is_active = 0 WHERE id = '$id'";
-        return ejecutarConsulta($sql);
+        $sql = "UPDATE jobs SET is_active = 0 WHERE id = ?";
+        $params = [$id];
+        return ejecutarConsulta($sql, $params);
     }
 
     // Método para activar un puesto de trabajo
     public function activar($id)
     {
         $id = limpiarCadena($id);
-        $sql = "UPDATE jobs SET is_active = 1 WHERE id = '$id'";
-        return ejecutarConsulta($sql);
+        $sql = "UPDATE jobs SET is_active = 1 WHERE id = ?";
+        $params = [$id];
+        return ejecutarConsulta($sql, $params);
     }
 
     // Método para mostrar un puesto de trabajo específico
@@ -62,8 +67,9 @@ class Jobs
         $sql = "SELECT j.*, a.area_name, c.company_name, a.company_id FROM jobs j 
                 INNER JOIN areas a ON j.area_id = a.id 
                 INNER JOIN companies c ON a.company_id = c.id 
-                WHERE j.id = '$id'";
-        return ejecutarConsultaSimpleFila($sql);
+                WHERE j.id = ?";
+        $params = [$id];
+        return ejecutarConsultaSimpleFila($sql, $params);
     }
 
     // Método para listar todos los puestos de trabajo
@@ -71,20 +77,27 @@ class Jobs
     {
         $sql = "SELECT j.*, a.area_name, c.company_name FROM jobs j 
                 INNER JOIN areas a ON j.area_id = a.id 
-                INNER JOIN companies c ON a.company_id = c.id";
+                INNER JOIN companies c ON a.company_id = c.id 
+                WHERE j.is_active = 1
+                ORDER BY c.company_name ASC, j.position_name ASC";
         return ejecutarConsulta($sql);
     }
 
     // Método para obtener una lista de puestos de trabajo activos para un select
-    public function select($area_id = null)
+    public function select($company_id = null)
     {
-        if ($area_id) {
-            $area_id = limpiarCadena($area_id);
-            $sql = "SELECT * FROM jobs WHERE is_active = 1 AND area_id = '$area_id'";
+        if ($company_id) {
+            $company_id = limpiarCadena($company_id);
+            $sql = "SELECT j.id, j.position_name FROM jobs j
+                    INNER JOIN areas a ON j.area_id = a.id
+                    WHERE j.is_active = 1 AND a.company_id = ?
+                    ORDER BY j.position_name ASC";
+            $params = [$company_id];
+            return ejecutarConsulta($sql, $params);
         } else {
-            $sql = "SELECT * FROM jobs WHERE is_active = 1";
+            $sql = "SELECT id, position_name FROM jobs WHERE is_active = 1 ORDER BY position_name ASC";
+            return ejecutarConsulta($sql);
         }
-        return ejecutarConsulta($sql);
     }
 
     // Método para verificar si un puesto de trabajo ya existe
@@ -94,21 +107,48 @@ class Jobs
         $area_id = limpiarCadena($area_id);
         if ($id) {
             $id = limpiarCadena($id);
-            $sql = "SELECT id FROM jobs WHERE position_name = '$position_name' AND area_id = '$area_id' AND id != '$id'";
+            $sql = "SELECT id FROM jobs WHERE position_name = ? AND area_id = ? AND id != ?";
+            $params = [$position_name, $area_id, $id];
         } else {
-            $sql = "SELECT id FROM jobs WHERE position_name = '$position_name' AND area_id = '$area_id'";
+            $sql = "SELECT id FROM jobs WHERE position_name = ? AND area_id = ?";
+            $params = [$position_name, $area_id];
         }
-        $result = ejecutarConsulta($sql);
+        $result = ejecutarConsulta($sql, $params);
         if ($result && $result->num_rows > 0) {
             return true; // Puesto ya existe
         }
         return false; // Puesto no existe
     }
 
-    // **Nueva Función para Listar Puestos por Área**
+    // Método para listar puestos de trabajo por Área
+    public function listar_por_area($area_id)
+    {
+        $area_id = limpiarCadena($area_id);
+        $sql = "SELECT id, position_name FROM jobs WHERE is_active = 1 AND area_id = ? ORDER BY position_name ASC";
+        $params = [$area_id];
+        return ejecutarConsulta($sql, $params);
+    }
 
+    // Método para listar puestos de trabajo activos
+    public function listarPuestosActivos()
+    {
+        $sql = "SELECT id, position_name FROM jobs WHERE is_active = 1 ORDER BY position_name ASC";
+        return ejecutarConsulta($sql);
+    }
 
+    // Método para seleccionar puestos por empresa
+    public function selectByCompany($company_id)
+    {
+        $sql = "SELECT j.id, j.position_name
+                FROM jobs j
+                INNER JOIN areas a ON j.area_id = a.id
+                WHERE a.company_id = ? AND j.is_active = 1
+                ORDER BY j.position_name ASC";
+        $params = [$company_id];
+        return ejecutarConsulta($sql, $params);
+    }
 
+    
 
     public function listarFiltrado($company_id, $area_id, $position_id)
     {
@@ -132,17 +172,5 @@ class Jobs
         return ejecutarConsulta($sql);
     }
 
-    public function listarPuestosActivos()
-    {
-        $sql = "SELECT id, position_name FROM jobs WHERE is_active = 1 ORDER BY position_name ASC";
-        return ejecutarConsulta($sql);
-    }
-
-    // Listar puestos de trabajo por Área
-    public function listar_por_area($area_id)
-    {
-        $area_id = limpiarCadena($area_id);
-        $sql = "SELECT id, position_name FROM jobs WHERE is_active = 1 AND area_id = '$area_id' ORDER BY position_name ASC";
-        return ejecutarConsulta($sql);
-    }
 }
+?>

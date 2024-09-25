@@ -1,4 +1,4 @@
-
+// scripts/documentMandatory.js
 $(document).ready(function () {
     // Inicializar select2 para mejorar la experiencia de usuario
     $('#company_id, #position_id').select2({
@@ -16,6 +16,9 @@ $(document).ready(function () {
             cargarPuestos(company_id);
             $('#position_id').val(null).trigger('change');  // Limpiar el select de puestos
             $('#document-list').empty();  // Limpiar la lista de documentos
+        } else {
+            $('#position_id').empty().trigger('change');
+            $('#document-list').empty();
         }
     });
 
@@ -24,6 +27,8 @@ $(document).ready(function () {
         const position_id = $(this).val();
         if (position_id) {
             cargarDocumentos(position_id);  // Cargar los documentos del puesto seleccionado
+        } else {
+            $('#document-list').empty();
         }
     });
 
@@ -36,7 +41,8 @@ $(document).ready(function () {
                 $('#company_id').html('<option value="">Seleccione una empresa</option>' + data);  // Llenar el select con empresas
             },
             error: function (xhr, status, error) {
-                mostrarError("Error al cargar las empresas");
+                console.error("Error al cargar las empresas:", xhr.responseText);
+                mostrarError("Error al cargar las empresas.");
             }
         });
     }
@@ -50,10 +56,17 @@ $(document).ready(function () {
             method: 'POST',
             data: { company_id: company_id },
             success: function (data) {
-                $('#position_id').html('<option value="">Seleccione un puesto</option>' + data);  // Llenar el select de puestos
+                if (data.includes("No hay puestos disponibles")) {
+                    $('#position_id').html('<option value="">No hay puestos disponibles</option>');
+                } else if (data.includes("Error al cargar puestos")) {
+                    $('#position_id').html('<option value="">Error al cargar puestos</option>');
+                } else {
+                    $('#position_id').html('<option value="">Seleccione un puesto</option>' + data);  // Llenar el select de puestos
+                }
             },
             error: function (xhr, status, error) {
-                mostrarError("Error al cargar los puestos");
+                console.error("Error al cargar los puestos:", xhr.responseText);
+                mostrarError("Error al cargar los puestos.");
             }
         });
     }
@@ -67,11 +80,27 @@ $(document).ready(function () {
             method: 'POST',
             data: { position_id: position_id },
             success: function (response) {
-                const documentos = JSON.parse(response);
-                renderizarDocumentos(documentos);
-                mostrarExito("Documentos cargados exitosamente.");
+                // Verificar si la respuesta es JSON
+                try {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (data.success) {
+                        const documentos = data.data;
+                        if (documentos.length > 0) {
+                            renderizarDocumentos(documentos);
+                            mostrarExito("Documentos cargados exitosamente.");
+                        } else {
+                            $('#document-list').html('<p>No hay documentos asignados para este puesto.</p>');
+                        }
+                    } else {
+                        mostrarError(data.message);
+                    }
+                } catch (e) {
+                    console.error("Error al parsear la respuesta JSON:", e);
+                    mostrarError("Error al procesar la respuesta del servidor.");
+                }
             },
             error: function (xhr, status, error) {
+                console.error("Error al cargar los documentos asignados:", xhr.responseText);
                 mostrarError("Error al cargar los documentos asignados.");
             }
         });
@@ -92,7 +121,7 @@ $(document).ready(function () {
                             <label class="custom-control custom-checkbox">
                                 <input type="checkbox" class="custom-control-input documento-checkbox" data-id="${doc.document_id}" ${doc.asignado ? 'checked' : ''}>
                                 <span class="custom-control-indicator"></span>
-                                <span class="custom-control-description">${doc.documentName}</span>
+                                <span class="custom-control-description">${escapeHtml(doc.documentName)}</span>
                             </label>
                         </div>
                     </div>
@@ -136,6 +165,11 @@ $(document).ready(function () {
         e.preventDefault();
 
         const position_id = $('#position_id').val();
+        if (!position_id) {
+            mostrarAdvertencia("Seleccione un puesto para asignar los documentos.");
+            return;
+        }
+
         const documentosSeleccionados = [];
         const documentosDesmarcados = [];
         let errorDetected = false;
@@ -149,7 +183,7 @@ $(document).ready(function () {
                 if (!document_type) {
                     mostrarAdvertencia(`Debe seleccionar si el documento "${$(this).siblings('.custom-control-description').text()}" es Obligatorio u Opcional.`);
                     errorDetected = true;
-                    return false;
+                    return false; // Salir del each
                 }
 
                 documentosSeleccionados.push({
@@ -174,10 +208,21 @@ $(document).ready(function () {
                 documentosDesmarcados: JSON.stringify(documentosDesmarcados)
             },
             success: function (response) {
-                mostrarExito("Asignación guardada exitosamente.");
-                cargarDocumentos(position_id);
+                try {
+                    const data = typeof response === 'string' ? JSON.parse(response) : response;
+                    if (data.success) {
+                        mostrarExito(data.message);
+                        cargarDocumentos(position_id);
+                    } else {
+                        mostrarError(data.message);
+                    }
+                } catch (e) {
+                    console.error("Error al parsear la respuesta JSON:", e);
+                    mostrarError("Error al procesar la respuesta del servidor.");
+                }
             },
             error: function (xhr, status, error) {
+                console.error("Error al guardar la asignación:", xhr.responseText);
                 mostrarError("Error al guardar la asignación.");
             }
         });
@@ -189,7 +234,7 @@ $(document).ready(function () {
         $('#company_id').val(null).trigger('change');
         $('#position_id').val(null).trigger('change');
         $('#document-list').empty();
-    
+
         // Mostrar el Toastify de asignación cancelada
         Toastify({
             text: "Asignación cancelada.",
@@ -198,7 +243,6 @@ $(document).ready(function () {
             gravity: "top",
             position: "right",
             backgroundColor: "#ffc107",  // Amarillo para advertencias/cancelaciones
-            
             className: "toast-progress",
         }).showToast();
     });
@@ -212,7 +256,6 @@ $(document).ready(function () {
             gravity: "top",
             position: "right",
             backgroundColor: "#dc3545",  // Rojo para errores
-            
             className: "toast-progress",
         }).showToast();
     }
@@ -225,9 +268,7 @@ $(document).ready(function () {
             gravity: "top",
             position: "right",
             backgroundColor: "#28a745",  // Verde para éxito
-            
             className: "toast-progress",
-
         }).showToast();
     }
 
@@ -241,5 +282,15 @@ $(document).ready(function () {
             backgroundColor: "#ffc107",  // Amarillo para advertencias
             className: "toast-progress",
         }).showToast();
+    }
+
+    // Función para escapar caracteres HTML
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 });

@@ -15,7 +15,7 @@ class LoginController
 
             // Obtener y limpiar entradas
             $username = isset($_POST['username']) ? limpiarCadena($_POST['username']) : "";
-            $password = isset($_POST['password']) ? limpiarCadena($_POST['password']) : "";
+            $password = isset($_POST['password']) ? trim($_POST['password']) : ""; // Solo trim
 
             // Validar que los campos no estén vacíos
             if (empty($username) || empty($password)) {
@@ -27,26 +27,27 @@ class LoginController
 
             if ($result) {
                 session_start();
-                session_regenerate_id(true); // Regenerar el ID de sesión para seguridad
-                $_SESSION['user_id'] = $result['id']; // Guardar el ID del usuario en la sesión
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $result['id'];
                 $_SESSION['username'] = $result['username'];
-                $_SESSION['user_role'] = $result['role']; // 'superadmin', 'adminrh', etc.
-                $_SESSION['user_type'] = 'user'; // Indica que es un usuario del tipo 'user'
+                $_SESSION['user_role'] = $result['role'];
+                $_SESSION['user_type'] = 'user';
                 $_SESSION['full_name'] = $result['names'] . ' ' . $result['surname'] . ' ' . $result['lastname'];
 
-                // Registrar el login en la tabla user_access_logs
+                // Registrar el login
                 $user->registrarLogin($result['id']);
 
                 $response = [
                     'success' => true,
                     'role' => $result['role'],
-                    'type' => 'user' // Añadir el tipo de usuario en la respuesta
+                    'type' => 'user'
                 ];
             } else {
+                error_log("Intento de login fallido para usuario: $username");
                 $response = ['success' => false, 'message' => 'Usuario o contraseña incorrectos.'];
             }
         } catch (Exception $e) {
-            logError($e->getMessage()); // Registra el error en el archivo de log
+            error_log($e->getMessage());
             $response = [
                 'success' => false,
                 'message' => 'Error interno del servidor. Por favor, inténtalo de nuevo.'

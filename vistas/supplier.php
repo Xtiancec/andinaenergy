@@ -1,18 +1,5 @@
 <?php
 
-session_start();
-
-// Verificar si el usuario ha iniciado sesión
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login.html");
-    exit();
-}
-
-// Verificar el rol del usuario
-if ($_SESSION['role'] !== 'superadmin' && $_SESSION['role'] !== 'adminpr') {
-    echo "No tienes permiso para acceder a esta página.";
-    exit();
-}
 
 require 'layout/header.php';
 require 'layout/navbar.php';

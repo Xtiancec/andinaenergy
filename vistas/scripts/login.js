@@ -5,7 +5,7 @@ $(document).ready(function () {
         e.preventDefault(); // Evitar el envío normal del formulario
 
         let username = $("#username").val().trim();
-        let password = $("#clavea").val().trim();
+        let password = $("#password").val().trim(); // Asegúrate de que el ID coincide con el HTML
 
         // Validación básica
         if (username === "" || password === "") {
@@ -17,14 +17,11 @@ $(document).ready(function () {
             return;
         }
 
-        // Mostrar preloader o deshabilitar el botón si es necesario
-        // Por ejemplo:
-        // $("#login-button").prop('disabled', true);
-
+        // Enviar la solicitud AJAX
         $.ajax({
             url: "../controlador/LoginController.php?op=verificar",
             method: "POST",
-            data: { username: username, password: password },
+            data: { username: username, password: password }, // Enviar 'password'
             dataType: "json",
             success: function (data) {
                 if (data.success) {
@@ -80,8 +77,6 @@ $(document).ready(function () {
             },
             complete: function () {
                 // Rehabilitar el botón o ocultar el preloader si es necesario
-                // Por ejemplo:
-                // $("#login-button").prop('disabled', false);
             }
         });
     });

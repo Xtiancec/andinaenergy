@@ -3,51 +3,58 @@ require_once '../config/Conexion.php';
 
 class DocumentName
 {
-
+    // Inserta un nuevo documento
     public function insertar($documentName)
     {
-        $sql = "INSERT INTO document_name (documentName, is_active) VALUES ('$documentName', '1')";
-        return ejecutarConsulta($sql);
+        $sql = "INSERT INTO document_name (documentName, is_active) VALUES (?, '1')";
+        $params = [$documentName];
+        return ejecutarConsulta($sql, $params);
     }
 
+    // Edita un documento existente
     public function editar($id, $documentName)
     {
-        $sql = "UPDATE document_name SET documentName='$documentName' WHERE id='$id'";
-        return ejecutarConsulta($sql);
+        $sql = "UPDATE document_name SET documentName = ? WHERE id = ?";
+        $params = [$documentName, $id];
+        return ejecutarConsulta($sql, $params);
     }
 
-    // Método para desactivar un área
+    // Desactiva un documento
     public function desactivar($id)
     {
-        $sql = "UPDATE document_name SET is_active='0' WHERE id='$id'";
-        return ejecutarConsulta($sql);
+        $sql = "UPDATE document_name SET is_active = '0' WHERE id = ?";
+        $params = [$id];
+        return ejecutarConsulta($sql, $params);
     }
 
-    // Método para activar un área
+    // Activa un documento
     public function activar($id)
     {
-        $sql = "UPDATE document_name SET is_active='1' WHERE id='$id'";
-        return ejecutarConsulta($sql);
+        $sql = "UPDATE document_name SET is_active = '1' WHERE id = ?";
+        $params = [$id];
+        return ejecutarConsulta($sql, $params);
     }
 
-    // Método para mostrar un registro de área
+    // Muestra un documento específico
     public function mostrar($id)
     {
-        $sql = "SELECT * FROM document_name WHERE id='$id'";
-        return ejecutarConsultaSimpleFila($sql);
+        $sql = "SELECT * FROM document_name WHERE id = ?";
+        $params = [$id];
+        return ejecutarConsultaSimpleFila($sql, $params);
     }
 
-    // Método para listar todos los registros de áreas
+    // Lista todos los documentos
     public function listar()
     {
         $sql = "SELECT * FROM document_name";
         return ejecutarConsulta($sql);
     }
 
-    // Método para obtener una lista de áreas activas para usar en un select
+    // Obtiene una lista de documentos activos
     public function select()
     {
-        $sql = "SELECT * FROM document_name WHERE is_active=1";
+        $sql = "SELECT * FROM document_name WHERE is_active = '1' ORDER BY documentName ASC";
         return ejecutarConsulta($sql);
     }
 }
+?>

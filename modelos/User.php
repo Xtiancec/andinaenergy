@@ -1,6 +1,6 @@
 <?php
-
 require '../vendor/autoload.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -26,21 +26,21 @@ class User
         $sql_verificar = "SELECT id FROM users WHERE username = ?";
         $params_verificar = [$username];
         $result_verificar = ejecutarConsultaSimpleFila($sql_verificar, $params_verificar);
-    
+
         if ($result_verificar) {
             return "El nombre de usuario ya está registrado.";
         }
-    
+
         // Generar contraseña aleatoria
         $password = bin2hex(random_bytes(4)); // Generar una contraseña aleatoria de 8 caracteres
         $password_hashed = password_hash($password, PASSWORD_DEFAULT); // Encriptar la contraseña
-    
+
         // Insertar el nuevo usuario en la base de datos
         $sql_insertar = "INSERT INTO users (company_id, area_id, identification_type, username, password, email, lastname, surname, names, nacionality, role, job_id, is_employee)
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $params_insertar = [$company_id, $area_id, $identification_type, $username, $password_hashed, $email, $lastname, $surname, $names, $nacionality, $role, $job_id, $is_employee];
         $result_insertar = ejecutarConsulta($sql_insertar, $params_insertar);
-    
+
         if ($result_insertar) {
             // Enviar el correo electrónico con las credenciales
             if (!$this->enviarCorreo($email, $names, $username, $password)) {
@@ -48,10 +48,10 @@ class User
             }
             return "Usuario registrado correctamente y correo enviado.";
         }
-    
+
         return "Error al registrar el usuario.";
     }
-    
+
     // Función para editar un usuario existente
     public function editar($id, $company_id, $area_id, $identification_type, $username, $email, $lastname, $surname, $names, $nacionality, $role, $job_id, $is_employee)
     {
@@ -105,7 +105,7 @@ class User
     }
 
     // Función para enviar un correo con las credenciales del usuario
-    private function enviarCorreo($email,$names, $username, $password)
+    private function enviarCorreo($email, $names, $username, $password)
     {
         $mail = new PHPMailer(true);
 
@@ -198,6 +198,48 @@ class User
         return ejecutarConsulta($sql, $params) ? "Contraseña actualizada correctamente." : "No se pudo actualizar la contraseña.";
     }
 
+    // Única definición de autenticar
+    public function autenticar($username, $password)
+    {
+        $sql = "SELECT * FROM users WHERE username = ? AND is_active = 1";
+        $params = [$username];
+        $result = ejecutarConsultaSimpleFila($sql, $params);
+    
+        if ($result) {
+            error_log("Usuario encontrado: " . $username);
+            error_log("Contraseña ingresada: " . $password);
+            error_log("Hash en base de datos: " . $result['password']);
+    
+            if (password_verify($password, $result['password'])) {
+                error_log("Autenticación exitosa para usuario: " . $username);
+                return $result;
+            } else {
+                error_log("Contraseña incorrecta para usuario: " . $username);
+                return false;
+            }
+        } else {
+            error_log("Usuario no encontrado o inactivo: " . $username);
+            return false;
+        }
+    }
+    
+    
+    
+    // Única definición de registrarLogin
+    public function registrarLogin($userId)
+    {
+        $sql = "INSERT INTO user_access_logs (user_id, access_time) VALUES (?, NOW())";
+        $params = [$userId];
+        return ejecutarConsulta($sql, $params);
+    }
+
+    // Única definición de registrarLogout
+    public function registrarLogout($userId)
+    {
+        $sql = "UPDATE user_access_logs SET logout_time = NOW() WHERE user_id = ? AND logout_time IS NULL";
+        $params = [$userId];
+        return ejecutarConsulta($sql, $params);
+    }
     // Función para verificar duplicados de username
     public function verificarDuplicadoUsername($username, $userId = null)
     {

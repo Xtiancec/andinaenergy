@@ -1,15 +1,6 @@
 <?php
 // superadmin_dashboard.php
 
-session_start();
-
-// Verificar si el usuario ha iniciado sesión
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'user' || $_SESSION['user_role'] !== 'adminrh') {
-    header("Location: ../login.php");
-    exit();
-}
-
-
 require 'layout/header.php';
 require 'layout/navbar.php';
 require 'layout/sidebar.php';
@@ -22,7 +13,7 @@ require 'layout/sidebar.php';
     </div>
     <div class="col-md-6 text-right">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="javascript:void(0)">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="index.php">Inicio</a></li>
             <li class="breadcrumb-item">Configuración</li>
             <li class="breadcrumb-item active">Asignación de Documentos</li>
         </ol>
@@ -81,6 +72,7 @@ require 'layout/sidebar.php';
 
 <!-- Estilos Personalizados -->
 <style>
+    /* Tus estilos personalizados aquí */
     .form-group {
         margin-bottom: 1rem; /* Reducir el margen entre elementos */
     }
