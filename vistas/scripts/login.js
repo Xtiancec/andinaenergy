@@ -29,16 +29,16 @@ $(document).ready(function () {
                     if (data.type === 'user') {
                         switch (data.role) {
                             case "superadmin":
-                                window.location.href = "superadmin_dashboard.php"; 
+                                window.location.href = "dashboardSuperadmin.php"; 
                                 break;
                             case "adminrh":
-                                window.location.href = "adminrh_dashboard.php"; 
+                                window.location.href = "dashboardAdminRH.php"; 
                                 break;
                             case "adminpr":
-                                window.location.href = "adminpr_dashboard.php"; 
+                                window.location.href = "dashboardAdminPR.php"; 
                                 break;
                             case "user":
-                                window.location.href = "user_dashboard.php"; 
+                                window.location.href = "dashboardUser.php"; 
                                 break;
                             default:
                                 Swal.fire({
@@ -50,7 +50,7 @@ $(document).ready(function () {
                     } else if (data.type === 'applicant') {
                         window.location.href = "dashboardApplicant.php"; 
                     } else if (data.type === 'supplier') {
-                        window.location.href = "supplier_dashboard.php"; 
+                        window.location.href = "dashboardSupplier.php"; 
                     } else {
                         Swal.fire({
                             icon: 'error',

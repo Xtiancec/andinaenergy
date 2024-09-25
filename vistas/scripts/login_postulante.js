@@ -28,7 +28,7 @@ $(document).ready(function () {
             dataType: "json",
             success: function (data) {
                 if (data.success) {
-                    window.location.href = "applicant_details.php";
+                    window.location.href = "dashboardApplicant.php";
                 } else {
                     Swal.fire({
                         icon: 'error',

@@ -20,7 +20,7 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.success) {
                     // Redirigir al dashboard del proveedor
-                    window.location.href = "supplier_dashboard.php"; // Asegúrate de que esta es la URL correcta
+                    window.location.href = "dashboardSupplier.php"; // Asegúrate de que esta es la URL correcta
                 } else {
                     // Mostrar mensaje de error usando SweetAlert
                     Swal.fire({
