@@ -1,3 +1,5 @@
+// scripts/documentApplicant.js
+
 $(document).ready(function () {
     // Inicialización de Dropify
     $('.dropify').dropify({
@@ -15,34 +17,19 @@ $(document).ready(function () {
 
     var documentCounter = 1;
 
-    // Preguntar si desea subir un CV o un documento diferente
-    $('#uploadDocumentButton').on('click', function () {
-        Swal.fire({
-            title: '¿Qué tipo de documento deseas subir?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Subir CV',
-            cancelButtonText: 'Subir Otro Documento',
-            showDenyButton: true,
-            denyButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $('#cvUploadModal').modal('show'); // Abrir modal para subir CV
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-                $('#otherDocsUploadModal').modal('show'); // Abrir modal para subir otro documento
-            }
-        });
-    });
-
     // Añadir nuevo campo de documento para "otros documentos"
     $('#addDocument').on('click', function () {
         var newRowId = `doc_row_${documentCounter}`;
         var newFileInput = `
             <div class="form-group" id="${newRowId}">
-                <label for="other_file_${documentCounter}">Seleccionar Documento</label>
+                <label for="other_file_${documentCounter}"><i class="fa fa-upload"></i> Seleccionar Documento</label>
                 <input type="file" id="other_file_${documentCounter}" name="other_files[]" class="dropify" data-max-file-size="5M" required />
-                <div class="text-right">
-                <button type="button" class="btn btn-danger btn-sm removeDocumentRow" data-row-id="${newRowId}"><i class="fa fa-trash"></i> Eliminar</button>
+                <div class="form-group">
+                    <label for="other_observation_${documentCounter}"><i class="fa fa-comment"></i> Observación (Opcional)</label>
+                    <textarea id="other_observation_${documentCounter}" name="other_observations[]" class="form-control" rows="2" placeholder="Escribe una observación sobre este documento..."></textarea>
+                </div>
+                <div class="text-right mt-2">
+                    <button type="button" class="btn btn-danger btn-sm removeDocumentRow" data-row-id="${newRowId}"><i class="fa fa-trash"></i> Eliminar</button>
                 </div>  
             </div>`;
         $('#otherDocsContainer').append(newFileInput);
@@ -62,41 +49,73 @@ $(document).ready(function () {
     // Manejar la subida de CV
     $("#formCvUpload").on("submit", function (e) {
         e.preventDefault();
-        var formData = new FormData($(this)[0]);
+        var formData = new FormData(this);
 
         $.ajax({
-            url: "../controlador/DocumentApplicantController.php?op=subirCv",
-            type: "POST",
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function (evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                        $('#cvUploadProgress').css('width', percentComplete + '%');
+                        $('#cvUploadProgress').attr('aria-valuenow', percentComplete);
+                        $('#cvUploadProgress').find('span').text(percentComplete + '% Complete');
+                    }
+                }, false);
+                return xhr;
+            },
+            type: 'POST',
+            url: '../controlador/DocumentApplicantController.php?op=subirCv',
             data: formData,
             contentType: false,
             processData: false,
             success: function (response) {
-                var jsonResponse = JSON.parse(response);
-                if (jsonResponse.status) {
+                try {
+                    var jsonResponse = JSON.parse(response);
+                    if (jsonResponse.status) {
+                        Toastify({
+                            text: jsonResponse.message,
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                            close: true
+                        }).showToast();
+                        cargarDocumentos();
+                        $('#formCvUpload')[0].reset();
+                        $('.dropify').dropify(); // Reinicializar Dropify
+                        $('#cvUploadProgress').css('width', '0%');
+                        $('#cvUploadProgress').find('span').text('0% Complete');
+                    } else {
+                        Toastify({
+                            text: jsonResponse.message,
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#F44336",
+                            close: true
+                        }).showToast();
+                        $('#cvUploadProgress').css('width', '0%');
+                        $('#cvUploadProgress').find('span').text('0% Complete');
+                    }
+                } catch (e) {
+                    console.error("Error al parsear la respuesta JSON:", e);
                     Toastify({
-                        text: jsonResponse.message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#4CAF50",
-                        className: "toast-progress",
-                    }).showToast();
-                    cargarDocumentos();
-                    $('#formCvUpload')[0].reset();
-                    $('.dropify').dropify(); // Reinicializar Dropify
-                } else {
-                    Toastify({
-                        text: jsonResponse.message,
-                        duration: 3000,
+                        text: "Error inesperado del servidor.",
+                        duration: 5000,
                         gravity: "top",
                         position: "right",
                         backgroundColor: "#F44336",
-                        className: "toast-progress",
+                        close: true
                     }).showToast();
+                    $('#cvUploadProgress').css('width', '0%');
+                    $('#cvUploadProgress').find('span').text('0% Complete');
                 }
             },
             error: function () {
                 Swal.fire('Error', 'Ocurrió un error al subir el CV.', 'error');
+                $('#cvUploadProgress').css('width', '0%');
+                $('#cvUploadProgress').find('span').text('0% Complete');
             }
         });
     });
@@ -104,41 +123,73 @@ $(document).ready(function () {
     // Manejar la subida de otros documentos
     $("#formOtherDocsUpload").on("submit", function (e) {
         e.preventDefault();
-        var formData = new FormData($(this)[0]);
+        var formData = new FormData(this);
 
         $.ajax({
-            url: "../controlador/DocumentApplicantController.php?op=subirOtrosDocumentos",
-            type: "POST",
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function (evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                        $('#otherDocsUploadProgress').css('width', percentComplete + '%');
+                        $('#otherDocsUploadProgress').attr('aria-valuenow', percentComplete);
+                        $('#otherDocsUploadProgress').find('span').text(percentComplete + '% Complete');
+                    }
+                }, false);
+                return xhr;
+            },
+            type: 'POST',
+            url: '../controlador/DocumentApplicantController.php?op=subirOtrosDocumentos',
             data: formData,
             contentType: false,
             processData: false,
             success: function (response) {
-                var jsonResponse = JSON.parse(response);
-                if (jsonResponse.status) {
+                try {
+                    var jsonResponse = JSON.parse(response);
+                    if (jsonResponse.status) {
+                        Toastify({
+                            text: jsonResponse.message,
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                            close: true
+                        }).showToast();
+                        cargarDocumentos();
+                        $('#formOtherDocsUpload')[0].reset();
+                        $('.dropify').dropify(); // Reinicializar Dropify
+                        $('#otherDocsUploadProgress').css('width', '0%');
+                        $('#otherDocsUploadProgress').find('span').text('0% Complete');
+                    } else {
+                        Toastify({
+                            text: jsonResponse.message,
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#F44336",
+                            close: true
+                        }).showToast();
+                        $('#otherDocsUploadProgress').css('width', '0%');
+                        $('#otherDocsUploadProgress').find('span').text('0% Complete');
+                    }
+                } catch (e) {
+                    console.error("Error al parsear la respuesta JSON:", e);
                     Toastify({
-                        text: jsonResponse.message,
-                        duration: 3000,
-                        gravity: "top",
-                        position: "right",
-                        backgroundColor: "#4CAF50",
-                        className: "toast-progress",
-                    }).showToast();
-                    cargarDocumentos();
-                    $('#formOtherDocsUpload')[0].reset();
-                    $('.dropify').dropify(); // Reinicializar Dropify
-                } else {
-                    Toastify({
-                        text: jsonResponse.message,
-                        duration: 3000,
+                        text: "Error inesperado del servidor.",
+                        duration: 5000,
                         gravity: "top",
                         position: "right",
                         backgroundColor: "#F44336",
-                        className: "toast-progress",
+                        close: true
                     }).showToast();
+                    $('#otherDocsUploadProgress').css('width', '0%');
+                    $('#otherDocsUploadProgress').find('span').text('0% Complete');
                 }
             },
             error: function () {
                 Swal.fire('Error', 'Ocurrió un error al subir los documentos.', 'error');
+                $('#otherDocsUploadProgress').css('width', '0%');
+                $('#otherDocsUploadProgress').find('span').text('0% Complete');
             }
         });
     });
@@ -148,32 +199,35 @@ $(document).ready(function () {
         $.ajax({
             url: "../controlador/DocumentApplicantController.php?op=listarDocumentos",
             type: "GET",
-            success: function (response) {
-                try {
-                    var jsonResponse = JSON.parse(response);
+            dataType: "json",
+            success: function (jsonResponse) {
+                if (jsonResponse.status) {
+                    var tableBody = $("#documentList");
+                    tableBody.empty();
 
-                    if (jsonResponse.status === false) {
-                        Swal.fire('Información', jsonResponse.message, 'info');
-                        $("#documentList").html('<tr><td colspan="3">No se encontraron documentos subidos.</td></tr>');
-                    } else {
-                        var tableBody = $("#documentList");
-                        tableBody.empty();
+                    if (jsonResponse.documents.length === 0) {
+                        tableBody.append('<tr><td colspan="4" class="text-center">No se encontraron documentos subidos.</td></tr>');
+                        return;
+                    }
 
-                        // Recorrer los documentos y agregarlos a la tabla
-                        jsonResponse.forEach(function (doc) {
-                            var row = `<tr>
+                    // Recorrer los documentos y agregarlos a la tabla
+                    jsonResponse.documents.forEach(function (doc) {
+                        var observation = doc.user_observation ? doc.user_observation : 'Sin observaciones';
+                        var row = `
+                            <tr>
                                 <td>${doc.original_file_name}</td>
+                                <td>${observation}</td>
                                 <td>${doc.created_at}</td>
                                 <td class="text-center">
-                                    <button class="btn btn-danger btn-sm" onclick="eliminarDocumento(${doc.id})">Eliminar</button>
+                                    <a href="${doc.document_path}" target="_blank" class="btn btn-primary btn-sm mr-2"><i class="fa fa-eye"></i> Ver</a>
+                                    <button class="btn btn-danger btn-sm" onclick="eliminarDocumento(${doc.id})"><i class="fa fa-trash"></i> Eliminar</button>
                                 </td>
                             </tr>`;
-                            tableBody.append(row);
-                        });
-                    }
-                } catch (e) {
-                    console.error("Error procesando respuesta JSON: ", e);
-                    Swal.fire('Error', 'Error al procesar los documentos.', 'error');
+                        tableBody.append(row);
+                    });
+                } else {
+                    Swal.fire('Información', jsonResponse.message, 'info');
+                    $("#documentList").html('<tr><td colspan="4" class="text-center">No se encontraron documentos subidos.</td></tr>');
                 }
             },
             error: function () {
@@ -198,8 +252,8 @@ $(document).ready(function () {
                     url: "../controlador/DocumentApplicantController.php?op=eliminarDocumento",
                     type: "POST",
                     data: { id: id },
-                    success: function (response) {
-                        var jsonResponse = JSON.parse(response);
+                    dataType: "json",
+                    success: function (jsonResponse) {
                         if (jsonResponse.status) {
                             Toastify({
                                 text: jsonResponse.message,
@@ -207,7 +261,7 @@ $(document).ready(function () {
                                 gravity: "top",
                                 position: "right",
                                 backgroundColor: "#4CAF50",
-                                className: "toast-progress",
+                                close: true
                             }).showToast();
                             cargarDocumentos();
                         } else {
@@ -217,7 +271,7 @@ $(document).ready(function () {
                                 gravity: "top",
                                 position: "right",
                                 backgroundColor: "#F44336",
-                                className: "toast-progress",
+                                close: true
                             }).showToast();
                         }
                     },
@@ -228,76 +282,4 @@ $(document).ready(function () {
             }
         });
     };
-
-    // Subida de CV
-    $(document).ready(function () {
-        // Subida de CV
-        $('#formCvUpload').on('submit', function (e) {
-            e.preventDefault();
-            var formData = new FormData(this);
-
-            $.ajax({
-                xhr: function () {
-                    var xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener("progress", function (evt) {
-                        if (evt.lengthComputable) {
-                            var percentComplete = (evt.loaded / evt.total) * 100;
-                            $('#cvUploadProgress').css('width', percentComplete + '%');
-                            $('#cvUploadProgress').attr('aria-valuenow', percentComplete);
-                            $('#cvUploadProgress span').text(Math.round(percentComplete) + '% Complete');
-                        }
-                    }, false);
-                    return xhr;
-                },
-                type: 'POST',
-                url: 'upload_cv.php',  // Cambia por tu archivo PHP que maneja la subida
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function (response) {
-                    console.log('Subida completa');
-                    $('#cvUploadProgress').css('width', '0%');
-                    $('#cvUploadProgress span').text('0% Complete');
-                },
-                error: function (response) {
-                    console.log('Error en la subida');
-                }
-            });
-        });
-
-        // Subida de otros documentos
-        $('#formOtherDocsUpload').on('submit', function (e) {
-            e.preventDefault();
-            var formData = new FormData(this);
-
-            $.ajax({
-                xhr: function () {
-                    var xhr = new window.XMLHttpRequest();
-                    xhr.upload.addEventListener("progress", function (evt) {
-                        if (evt.lengthComputable) {
-                            var percentComplete = (evt.loaded / evt.total) * 100;
-                            $('#otherDocsUploadProgress').css('width', percentComplete + '%');
-                            $('#otherDocsUploadProgress').attr('aria-valuenow', percentComplete);
-                            $('#otherDocsUploadProgress span').text(Math.round(percentComplete) + '% Complete');
-                        }
-                    }, false);
-                    return xhr;
-                },
-                type: 'POST',
-                url: 'upload_documents.php',  // Cambia por tu archivo PHP que maneja la subida
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function (response) {
-                    console.log('Subida completa');
-                    $('#otherDocsUploadProgress').css('width', '0%');
-                    $('#otherDocsUploadProgress span').text('0% Complete');
-                },
-                error: function (response) {
-                    console.log('Error en la subida');
-                }
-            });
-        });
-    });
-
 });

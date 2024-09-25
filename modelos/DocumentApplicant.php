@@ -1,141 +1,164 @@
-    <?php
-    require "../config/Conexion.php";
+<?php
+// modelos/DocumentApplicant.php
 
-    class DocumentApplicant
+require_once "../config/Conexion.php";
+
+class DocumentApplicant
+{
+    // Insertar documento en la base de datos
+    public function insertar($applicant_id, $document_name, $original_file_name, $generated_file_name, $document_path, $user_observation = null)
     {
-        // Insertar documento en la base de datos
-        public function insertar($applicant_id, $document_name, $original_file_name, $generated_file_name, $document_path)
-        {
-            // Estado inicial 'Subido' tiene el ID correspondiente en la tabla document_states (por ejemplo, 1 para 'Subido')
-            $state_id = 1; // Asegúrate de que este ID corresponde al estado 'Subido' en la tabla `document_states`.
-
-            $sql = "INSERT INTO documents_applicants (applicant_id, document_name, original_file_name, generated_file_name, document_path, state_id, created_at) 
-                    VALUES ('$applicant_id', '$document_name', '$original_file_name', '$generated_file_name', '$document_path', '$state_id', CURRENT_TIMESTAMP)";
-
-            return ejecutarConsulta($sql);
-        }
-
-        // Listar todos los documentos de un postulante
-        public function listar($applicant_id)
-        {
-            $sql = "SELECT * FROM documents_applicants WHERE applicant_id = '$applicant_id'";
-            $result = ejecutarConsulta($sql);
-
-            if ($result) {
-                $rows = [];
-                while ($row = $result->fetch_assoc()) {
-                    $rows[] = $row;
-                }
-                return $rows;
-            } else {
-                return [];
-            }
-        }
-
-        // Eliminar documento por ID
-        public function eliminar($id)
-        {
-            $sql = "DELETE FROM documents_applicants WHERE id = '$id'";
-            return ejecutarConsulta($sql);
-        }
-
-        // Mostrar detalles de un documento por ID
-        public function mostrar($id)
-        {
-            $sql = "SELECT * FROM documents_applicants WHERE id = '$id'";
-            return ejecutarConsultaSimpleFila($sql);
-        }
-
-        // Listar todos los documentos de los postulantes
-        public function listarTodos()
-        {
-            $sql = "SELECT d.id, 
-                        a.names AS applicant_name, 
-                        d.document_name, 
-                        d.created_at, 
-                        d.uploaded_at, 
-                        d.admin_observation, 
-                        d.admin_reviewed, 
-                        d.document_path, 
-                        s.state_name,  -- Aquí incluimos el nombre del estado del documento
-                        j.position_name, 
-                        c.company_name
-                    FROM documents_applicants d
-                    JOIN applicants a ON d.applicant_id = a.id
-                    JOIN document_states s ON d.state_id = s.id  -- Asegúrate de unirte con la tabla de estados
-                    JOIN job_positions j ON a.job_id = j.id
-                    JOIN companies c ON j.company_id = c.id
-                    ORDER BY d.uploaded_at DESC";
-
-            $result = ejecutarConsulta($sql);
-
-            if ($result) {
-                $rows = [];
-                while ($row = $result->fetch_assoc()) {
-                    $rows[] = $row;
-                }
-                return $rows;
-            } else {
-                return null;
-            }
-        }
-
-        // Obtener un documento por su ID
-        public function obtenerDocumentoPorId($id)
-        {
-            $sql = "SELECT d.id, a.names AS applicant_name, d.document_name, d.document_path, d.uploaded_at, d.admin_observation, d.admin_reviewed, s.state_name 
-                    FROM documents_applicants d
-                    JOIN applicants a ON d.applicant_id = a.id
-                    JOIN document_states s ON d.state_id = s.id
-                    WHERE d.id = ?";
-            return ejecutarConsultaSimpleFila($sql, array($id));
-        }
-
-        // Marcar documento como revisado
-        public function marcarRevisado($id)
-        {
-            // Cambiar el estado del documento a "Revisado" (state_id = 2)
-            $sql = "UPDATE documents_applicants SET state_id = 2, admin_reviewed = 1 WHERE id = ?";
-            
-            global $conexion;
-        
-            if ($stmt = $conexion->prepare($sql)) {
-                $stmt->bind_param('i', $id); // Vincular el parámetro $id
-                return $stmt->execute();
-            } else {
-                echo "Error en la preparación de la consulta: " . $conexion->error;
-                return false;
-            }
-        }
-        
-
-        // Evaluar el documento
-        public function evaluarDocumento($id, $admin_observation, $state_id)
-        {
-            // Consulta SQL con placeholders para los parámetros
-            $sql = "UPDATE documents_applicants 
-                    SET admin_observation = ?, state_id = ?, admin_reviewed = 1
-                    WHERE id = ?";
-            
-            // Prepara la consulta
-            global $conexion;
-            if ($stmt = $conexion->prepare($sql)) {
-                // Vincular parámetros
-                $stmt->bind_param('sii', $admin_observation, $state_id, $id); // 'sii' -> String, Integer, Integer
-                
-                // Ejecutar la consulta
-                if ($stmt->execute()) {
-                    return true;
-                } else {
-                    echo "Error en la consulta: " . $stmt->error;
-                    return false;
-                }
-            } else {
-                echo "Error en la preparación de la consulta: " . $conexion->error;
-                return false;
-            }
-        }
-        
-        
-        
+        $state_id = 1; // Estado 'Subido'
+        $sql = "INSERT INTO documents_applicants 
+                (applicant_id, document_name, original_file_name, generated_file_name, document_path, state_id, user_observation, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        $params = [$applicant_id, $document_name, $original_file_name, $generated_file_name, $document_path, $state_id, $user_observation];
+        return ejecutarConsulta($sql, $params);
     }
+
+    // Listar todos los documentos de un postulante
+    public function listar($applicant_id)
+    {
+        $sql = "SELECT 
+                    d.id, 
+                    d.applicant_id,
+                    d.document_name,
+                    d.original_file_name,
+                    d.generated_file_name,
+                    d.document_path,
+                    d.created_at,
+                    d.uploaded_at,
+                    d.state_id,
+                    d.user_observation,
+                    d.admin_observation,
+                    d.admin_reviewed,
+                    s.state_name
+                FROM documents_applicants d
+                JOIN document_states s ON d.state_id = s.id
+                WHERE d.applicant_id = ?
+                ORDER BY d.created_at DESC";
+        $params = [$applicant_id];
+        return ejecutarConsulta($sql, $params);
+    }
+
+    // Eliminar documento por ID
+    public function eliminar($id)
+    {
+        $sql = "DELETE FROM documents_applicants WHERE id = ?";
+        $params = [$id];
+        return ejecutarConsulta($sql, $params);
+    }
+
+    // Mostrar detalles de un documento por ID
+    public function mostrar($id)
+    {
+        $sql = "SELECT 
+                    d.id, 
+                    d.applicant_id,
+                    d.document_name,
+                    d.original_file_name,
+                    d.generated_file_name,
+                    d.document_path,
+                    d.created_at,
+                    d.uploaded_at,
+                    d.state_id,
+                    d.user_observation,
+                    d.admin_observation,
+                    d.admin_reviewed,
+                    s.state_name
+                FROM documents_applicants d
+                JOIN document_states s ON d.state_id = s.id
+                WHERE d.id = ?";
+        $params = [$id];
+        return ejecutarConsultaSimpleFila($sql, $params);
+    }
+
+    // Evaluar el documento: Aprobar, Rechazar, Solicitar Corrección
+    public function evaluarDocumento($id, $admin_observation, $state_id)
+    {
+        $sql = "UPDATE documents_applicants 
+                SET admin_observation = ?, state_id = ?, admin_reviewed = 1, uploaded_at = CURRENT_TIMESTAMP 
+                WHERE id = ?";
+        $params = [$admin_observation, $state_id, $id];
+        return ejecutarConsulta($sql, $params);
+    }
+
+    // Listar todos los documentos de los postulantes con detalles adicionales y opcionalmente filtrar por fechas
+    public function listarTodos($start_date = '', $end_date = '')
+    {
+        $sql = "SELECT 
+                    d.id, 
+                    d.applicant_id,
+                    a.names AS applicant_name, 
+                    a.lastname, 
+                    a.username,
+                    a.email,
+                    d.document_name, 
+                    d.state_id
+                FROM documents_applicants d
+                JOIN applicants a ON d.applicant_id = a.id";
+
+        $params = [];
+
+        if (!empty($start_date) && !empty($end_date)) {
+            $sql .= " WHERE d.created_at BETWEEN ? AND ?";
+            $params[] = $start_date . " 00:00:00";
+            $params[] = $end_date . " 23:59:59";
+        }
+
+        $sql .= " ORDER BY d.created_at DESC";
+
+        $result = ejecutarConsulta($sql, $params);
+
+        if ($result) {
+            $rows = [];
+            while ($row = $result->fetch_assoc()) {
+                $rows[] = $row;
+            }
+            return $rows;
+        } else {
+            return [];
+        }
+    }
+
+    // Obtener documentos por usuario
+    public function obtenerDocumentosPorUsuario($user_id, $start_date = '', $end_date = '')
+    {
+        $sql = "SELECT 
+                    d.id AS document_id,
+                    d.document_name,
+                    d.original_file_name,
+                    d.document_path,
+                    d.user_observation,
+                    d.admin_observation,
+                    d.admin_reviewed,
+                    d.uploaded_at,
+                    d.state_id,
+                    s.state_name
+                FROM documents_applicants d
+                JOIN document_states s ON d.state_id = s.id
+                WHERE d.applicant_id = ?";
+
+        $params = [$user_id];
+
+        if (!empty($start_date) && !empty($end_date)) {
+            $sql .= " AND d.created_at BETWEEN ? AND ?";
+            $params[] = $start_date . ' 00:00:00';
+            $params[] = $end_date . ' 23:59:59';
+        }
+
+        $sql .= " ORDER BY d.created_at DESC";
+
+        $result = ejecutarConsulta($sql, $params);
+        if ($result) {
+            $documentos = [];
+            while ($row = $result->fetch_assoc()) {
+                $documentos[] = $row;
+            }
+            return $documentos;
+        } else {
+            return [];
+        }
+    }
+}
+?>
