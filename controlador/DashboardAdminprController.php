@@ -3,7 +3,7 @@
 
 session_start();
 
-// Verificar si el usuario es adminpr (Administrador de Proveedores)
+// Verificar si el usuario es 'user' y tiene el rol 'superadmin' o 'adminpr' (Administrador de Proveedores)
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
@@ -13,20 +13,19 @@ if (
     echo json_encode(['error' => 'No autorizado']);
     exit();
 }
+
 require_once '../config/Conexion.php'; // Asegúrate de que la ruta sea correcta
 
 $response = [];
 
 try {
-    // 1. Total de Proveedores
+    // 1. Total de Proveedores Activos
     $sql = "SELECT COUNT(*) as total FROM suppliers WHERE is_active = 1";
     $row = ejecutarConsultaSimpleFila($sql);
     $response['totalSuppliers'] = $row['total'] ?? 0;
 
-    // 2. Total de Usuarios Proveedores
-    // Asegúrate de que la lógica para contar usuarios proveedores sea correcta
-    // Aquí asumimos que los usuarios proveedores tienen 'role' = 'supplier_user'
-    $sql = "SELECT COUNT(*) as total FROM users WHERE role = 'supplier_user' AND is_active = 1";
+    // 2. Total de Usuarios Proveedores Activos
+    $sql = "SELECT COUNT(*) as total FROM users WHERE role = 'adminpr' AND is_active = 1";
     $row = ejecutarConsultaSimpleFila($sql);
     $response['totalSupplierUsers'] = $row['total'] ?? 0;
 
@@ -43,12 +42,15 @@ try {
     $response['evaluatedDocuments'] = $row['total'] ?? 0;
 
     // 5. Proveedores Registrados por Mes
-    $sql = "SELECT MONTH(created_at) as mes, COUNT(*) as total FROM suppliers WHERE is_active = 1 GROUP BY mes ORDER BY mes";
+    $sql = "SELECT MONTH(created_at) as mes, COUNT(*) as total 
+            FROM suppliers 
+            WHERE is_active = 1 
+            GROUP BY mes 
+            ORDER BY mes";
     $suppliersPerMonth = ejecutarConsultaArray($sql);
     $response['suppliersPerMonth'] = $suppliersPerMonth ? $suppliersPerMonth : [];
 
     // 6. Actividad Reciente de Proveedores
-    // Asegúrate de que exista la tabla 'supplier_access_logs'
     $sql = "SELECT s.companyName as supplier_name, 'Acceso' as action, sal.access_time as activity_time 
             FROM supplier_access_logs sal 
             JOIN suppliers s ON sal.supplier_id = s.id 
@@ -71,7 +73,17 @@ try {
     $documentsByStatus = ejecutarConsultaArray($sql);
     $response['documentsByStatus'] = $documentsByStatus ? $documentsByStatus : [];
 
-    // 8. Generar un hash de los datos para comparación en el frontend
+    // 8. Proveedores por Área (Agrupados por Departamento)
+    // Dado que no hay una relación directa con 'areas', agrupamos por 'department' en 'suppliers'
+    $sql = "SELECT department as area, COUNT(*) as total 
+            FROM suppliers 
+            WHERE is_active = 1 
+            GROUP BY department 
+            ORDER BY total DESC";
+    $suppliersByArea = ejecutarConsultaArray($sql);
+    $response['suppliersByArea'] = $suppliersByArea ? $suppliersByArea : [];
+
+    // 9. Generar un hash de los datos para comparación en el frontend
     $dataHash = md5(json_encode($response));
     $response['dataHash'] = $dataHash;
 

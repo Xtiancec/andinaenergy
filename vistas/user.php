@@ -1,5 +1,18 @@
 <?php
 // superadmin_dashboard.php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+// Verificar si el usuario ha iniciado sesión y es un adminrh (Administrador de Recursos Humanos)
+if (
+    !isset($_SESSION['user_type']) ||
+    $_SESSION['user_type'] !== 'user' ||
+    !isset($_SESSION['user_role']) ||
+    !in_array($_SESSION['user_role'], ['superadmin', 'adminrh']) // Permitir 'superadmin' o 'adminrh'
+) {
+    echo json_encode(['error' => 'No autorizado']);
+    exit();
+}
 
 require 'layout/header.php';
 require 'layout/navbar.php';

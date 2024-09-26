@@ -1,8 +1,8 @@
 <?php
 // login_supplier.php
-
-session_start();
-
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 // Si el usuario ya ha iniciado sesión como proveedor, redirígelo al dashboard
 if (
     isset($_SESSION['user_type']) &&
@@ -24,25 +24,25 @@ if (
     <meta name="description" content="Login de Proveedores">
     <meta name="author" content="Tu Nombre">
     <!-- Favicon icon -->
-    <link rel="icon" type="image/png" sizes="16x16" href="../app/template/images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="app/template/images/favicon.png">
     <title>Login Proveedores - ANDINA</title>
     <!-- Bootstrap Core CSS -->
-    <link href="../app/template/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="app/template/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <!-- Page CSS -->
-    <link href="../app/template/css/pages/login-register-lock.css" rel="stylesheet">
+    <link href="app/template/css/pages/login-register-lock.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="../app/template/css/style.css" rel="stylesheet">
+    <link href="app/template/css/style.css" rel="stylesheet">
     <!-- You can change the theme colors from here -->
-    <link href="../app/template/css/colors/default-dark.css" id="theme" rel="stylesheet">
+    <link href="app/template/css/colors/default-dark.css" id="theme" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
         <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
     <!-- Custom JavaScript for Login -->
-    <script src="../app/template/plugins/jquery/jquery.min.js"></script>
+    <script src="app/template/plugins/jquery/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha512-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGaNfTT4b5gXq1Ua37gHmqZVJ9lOgqTFw/FtIpP9r0CjCBwQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="../app/template/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script src="app/template/plugins/bootstrap/js/bootstrap.min.js"></script>
     <!-- SweetAlert para mensajes elegantes -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Tu script personalizado -->
@@ -60,13 +60,13 @@ if (
     <!-- End Preloader -->
 
     <!-- Main Wrapper -->
-    <section id="wrapper" class="login-register login-sidebar" style="background-image:url(../app/template/images/proveedor.jpg);">
+    <section id="wrapper" class="login-register login-sidebar" style="background-image:url(app/template/images/proveedor.jpg);">
         <div class="login-box card">
             <div class="card-body">
                 <!-- Formulario de Login -->
                 <form class="form-horizontal form-material" id="frmAcceso" method="post">
                     <a href="javascript:void(0)" class="text-center db">
-                        <img src="../app/template/images/andina.png" alt="Home" width="300" height="80" />
+                        <img src="app/template/images/andina.png" alt="Home" width="300" height="80" />
                     </a>
                     <br>
                     <h2 style="text-align: center; font-weight: bold;">Proveedores</h2>

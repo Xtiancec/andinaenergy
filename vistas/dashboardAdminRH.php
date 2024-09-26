@@ -1,19 +1,28 @@
 <?php
 // adminhr_dashboard.php
-
-session_start();
-
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 // Verificar si el usuario ha iniciado sesión y es un adminrh (Administrador de Recursos Humanos)
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
     !isset($_SESSION['user_role']) ||
-    !in_array($_SESSION['user_role'], ['superadmin', 'adminrh']) // Permitir 'superadmin' o 'adminpr'
+    !in_array($_SESSION['user_role'], ['superadmin', 'adminrh']) // Permitir 'superadmin' o 'adminrh'
 ) {
     echo json_encode(['error' => 'No autorizado']);
     exit();
 }
 
+// Definir scripts específicos para esta página
+$page_specific_scripts = '
+<!-- Incluir Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Tu script personalizado -->
+<script src="scripts/dashboardAdminrh.js"></script>
+';
+
+// Incluir los layouts
 require 'layout/header.php';
 require 'layout/navbar.php';
 require 'layout/sidebar.php';
@@ -158,7 +167,7 @@ require 'layout/sidebar.php';
         </div>
     </div>
 
-    <!-- Gráfico de Documentos Evaluados por Estado -->
+    <!-- Gráfico de Documentos Evaluados por Estado (Usuarios) -->
     <div class="row mt-4">
         <div class="col-lg-6">
             <div class="card shadow-sm">
@@ -197,23 +206,38 @@ require 'layout/sidebar.php';
         </div>
         <!-- Puedes añadir más gráficos o componentes aquí -->
     </div>
+
+    <!-- Nuevos Gráficos Integrados -->
+    <div class="row mt-4">
+        <!-- Gráfico de Turnover de Empleados por Mes (eCharts) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Turnover de Empleados por Mes</h5>
+                </div>
+                <div class="card-body">
+                    <div id="turnover-chart" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Gráfico de Distribución de Empleados por Departamento (Morris.js Donut) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Distribución de Empleados por Departamento</h5>
+                </div>
+                <div class="card-body">
+                    <div id="employee-department-donut" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Contenedor para almacenar dataHash -->
 <div id="adminhrDashboardData" data-data-hash=""></div>
 
-<!-- Incluir jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Incluir Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Incluir DataTables CSS y JS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- Incluir FontAwesome para iconos -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Tu script personalizado -->
-<script src="scripts/dashboardAdminrh.js"></script>
-
 <?php
+// Incluir el footer, que ya contiene los scripts comunes y el espacio para scripts específicos
 require 'layout/footer.php';
 ?>

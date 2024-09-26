@@ -1,4 +1,4 @@
-// scripts/dashboardAdminhr.js
+// scripts/dashboardAdminrh.js
 
 $(document).ready(function () {
     // Inicializar DataTables para la tabla de actividad reciente
@@ -18,6 +18,8 @@ $(document).ready(function () {
     let documentsStatusChartUsers;
     let documentsStatusChartApplicants;
     let usersStatusChart;
+    let turnoverChartEcharts;
+    let employeeDepartmentDonutChartMorris;
 
     let previousDataHash = null; // Almacena el hash de los datos anteriores
 
@@ -47,8 +49,8 @@ $(document).ready(function () {
                 // Actualizar tarjetas
                 $('#total-users').text(data.totalUsers);
                 $('#total-applicants').text(data.totalApplicants);
-                $('#pending-documents').text(data.pendingDocumentsUsers + data.pendingDocumentsApplicants);
-                $('#evaluated-documents').text(data.evaluatedDocumentsUsers + data.evaluatedDocumentsApplicants);
+                $('#pending-documents').text((data.pendingDocumentsUsers || 0) + (data.pendingDocumentsApplicants || 0));
+                $('#evaluated-documents').text((data.evaluatedDocumentsUsers || 0) + (data.evaluatedDocumentsApplicants || 0));
 
                 // Actualizar gráfico de Usuarios Registrados por Mes
                 actualizarGraficoUsers(data.usersPerMonth);
@@ -67,6 +69,12 @@ $(document).ready(function () {
 
                 // Actualizar gráfico de Usuarios Activos vs Inactivos
                 actualizarGraficoUsersStatus(data.usersStatus);
+
+                // Actualizar gráfico de Turnover de Empleados por Mes (eCharts)
+                actualizarGraficoTurnover(data.turnoverPerMonth);
+
+                // Actualizar gráfico de Distribución de Empleados por Departamento (Morris.js Donut)
+                actualizarGraficoEmployeeDepartment(data.employeeByDepartment);
             },
             error: function (xhr, status, error) {
                 console.error('Error al obtener datos:', error);
@@ -364,11 +372,72 @@ $(document).ready(function () {
         }
     }
 
+    // Función para actualizar el gráfico de Turnover de Empleados por Mes (eCharts)
+    function actualizarGraficoTurnover(turnoverPerMonth) {
+        var chartDom = document.getElementById('turnover-chart');
+        if (!turnoverChartEcharts) {
+            turnoverChartEcharts = echarts.init(chartDom);
+        }
+
+        var option = {
+            title: {
+                text: 'Turnover de Empleados por Mes',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            xAxis: {
+                type: 'category',
+                data: turnoverPerMonth.map(function(e) { return 'Mes ' + e.mes; }),
+                axisLabel: {
+                    rotate: 45
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: 'Número de Empleados'
+            },
+            series: [{
+                data: turnoverPerMonth.map(function(e) { return e.total; }),
+                type: 'bar',
+                barWidth: '60%',
+                itemStyle: {
+                    color: '#ff7f50'
+                }
+            }]
+        };
+
+        turnoverChartEcharts.setOption(option);
+    }
+
+    // Función para actualizar el gráfico de Distribución de Empleados por Departamento (Morris.js Donut)
+    function actualizarGraficoEmployeeDepartment(employeeByDepartment) {
+        var data = employeeByDepartment.map(function(e) {
+            return { label: e.departamento, value: e.total };
+        });
+
+        if (employeeDepartmentDonutChartMorris) {
+            // Actualizar datos
+            employeeDepartmentDonutChartMorris.setData(data);
+        } else {
+            // Crear el gráfico si no existe
+            employeeDepartmentDonutChartMorris = new Morris.Donut({
+                element: 'employee-department-donut',
+                data: data,
+                colors: ['#1abc9c', '#3498db', '#9b59b6', '#e74c3c', '#f1c40f', '#2ecc71'],
+                resize: true,
+                formatter: function (x, data) { return x }
+            });
+        }
+    }
+
     // Función para generar colores aleatorios para los gráficos de pastel y doughnut
     function generateColorArray(length) {
         const colors = [];
         for (let i = 0; i < length; i++) {
-            const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+            const hue = Math.floor(Math.random() * 360);
+            const color = `hsl(${hue}, 70%, 50%)`;
             colors.push(color);
         }
         return colors;

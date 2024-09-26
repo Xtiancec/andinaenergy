@@ -1,18 +1,28 @@
 <?php
 // adminpr_dashboard.php
 
-session_start();
-
-// Verificar si el usuario ha iniciado sesión y es un adminpr (Administrador de Proveedores)
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+// Verificar si el usuario ha iniciado sesión y es un adminpr (Administrador de Proveedores) o superadmin
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
     !isset($_SESSION['user_role']) ||
     !in_array($_SESSION['user_role'], ['superadmin', 'adminpr']) // Permitir 'superadmin' o 'adminpr'
 ) {
-    echo json_encode(['error' => 'No autorizado']);
+    header("Location: ../login.php"); // Asegúrate de que esta sea la URL correcta de login
     exit();
 }
+
+// Definir scripts específicos para esta página
+$page_specific_scripts = '
+<!-- DataTables Initialization -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="scripts/dashboardAdminpr.js"></script>
+';
+
+// Incluir los layouts
 require 'layout/header.php';
 require 'layout/navbar.php';
 require 'layout/sidebar.php';
@@ -104,15 +114,23 @@ require 'layout/sidebar.php';
         </div>
     </div>
 
-    <!-- Gráfico de Proveedores Registrados por Mes -->
+    <!-- Gráfico de Proveedores Registrados por Mes (Morris.js) -->
     <div class="row mt-4">
-        <div class="col-lg-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">Proveedores Registrados por Mes</h5>
-                </div>
+        <div class="col-lg-6">
+            <div class="card">
                 <div class="card-body">
-                    <canvas id="suppliers-chart" height="100"></canvas>
+                    <h4 class="card-title">Proveedores Registrados por Mes</h4>
+                    <div id="morris-bar-chart" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Proveedores por Área (eCharts) -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Proveedores por Área</h4>
+                    <div id="suppliers-area-chart" style="height: 350px;"></div>
                 </div>
             </div>
         </div>
@@ -121,7 +139,7 @@ require 'layout/sidebar.php';
     <!-- Tabla de Actividad Reciente de Proveedores -->
     <div class="row mt-4">
         <div class="col-lg-12">
-            <div class="card shadow-sm">
+            <div class="card">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Actividad Reciente de Proveedores</h5>
                     <a href="#" class="btn btn-sm btn-primary">Ver Más</a>
@@ -146,15 +164,13 @@ require 'layout/sidebar.php';
         </div>
     </div>
 
-    <!-- Gráfico de Documentos Evaluados por Estado -->
+    <!-- Gráfico de Documentos Evaluados por Estado (Morris.js Donut) -->
     <div class="row mt-4">
         <div class="col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">Documentos Evaluados por Estado</h5>
-                </div>
+            <div class="card">
                 <div class="card-body">
-                    <canvas id="documents-status-chart" height="150"></canvas>
+                    <h4 class="card-title">Documentos Evaluados por Estado</h4>
+                    <div id="morris-donut-chart" style="height: 350px;"></div>
                 </div>
             </div>
         </div>
@@ -162,21 +178,7 @@ require 'layout/sidebar.php';
     </div>
 </div>
 
-<!-- Contenedor para almacenar dataHash (opcional) -->
-<!-- <div id="adminprDashboardData" data-data-hash=""></div> -->
-
-<!-- Incluir jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Incluir Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Incluir DataTables CSS y JS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- Incluir FontAwesome para iconos -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Tu script personalizado -->
-<script src="scripts/dashboardAdminpr.js"></script>
-
 <?php
+// Incluir el footer, que ya contiene los scripts comunes y el espacio para scripts específicos
 require 'layout/footer.php';
 ?>

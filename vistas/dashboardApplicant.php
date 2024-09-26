@@ -1,19 +1,27 @@
 <?php
 // superadmin_dashboard.php
-
-session_start();
-
-// Verificar si el usuario ha iniciado sesión
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+// Verificar si el usuario ha iniciado sesión y es un postulante
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'applicant' || $_SESSION['user_role'] !== 'postulante') {
     header("Location: ../../login.php");
     exit();
 }
 
+// Definir scripts específicos para esta página
+$page_specific_scripts = '
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js"></script>
+<script src="scripts/dashboardApplicant.js"></script>
+';
+
+// Incluir los layouts
 require 'layout/header.php';
 require 'layout/navbar.php';
 require 'layout/sidebar.php';
 ?>
-
 
 <div class="row page-titles">
     <div class="col-md-5 align-self-center">
@@ -125,15 +133,36 @@ require 'layout/sidebar.php';
     </div>
 </div>
 
+<!-- Nuevos Gráficos Integrados -->
+<div class="row">
+    <!-- Gráfico de Turnover de Empleados por Mes (eCharts) -->
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h4 class="card-title text-info"><i class="fa fa-chart-line"></i> Turnover de Empleados por Mes</h4>
+                <div id="turnoverChartEcharts" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Distribución de Empleados por Departamento (Morris.js Donut) -->
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h4 class="card-title text-warning"><i class="fa fa-chart-pie"></i> Distribución de Empleados por Departamento</h4>
+                <div id="employeeDepartmentDonut" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 require 'layout/footer.php';
 ?>
 
 <div id="dashboardData" data-applicant-id="<?= $_SESSION['applicant_id']; ?>"></div>
-<!-- Agregar Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="scripts/dashboardApplicant.js"></script>
-
+<!-- Agregar eCharts, Morris.js y Chart.js ya incluidos en footer.php -->
+<!-- Tu script personalizado -->
 <!-- Opcional: Personalizar colores de las tarjetas con CSS -->
 <style>
     .card-title {

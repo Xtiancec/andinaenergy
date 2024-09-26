@@ -1,8 +1,9 @@
 <?php
 // user_dashboard.php
 
-session_start();
-
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 // Verificar si el usuario ha iniciado sesión
 if (
     !isset($_SESSION['user_type']) ||

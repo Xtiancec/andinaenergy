@@ -1,14 +1,14 @@
 <?php
-// controlador/DashboardAdminhrController.php
+// controlador/DashboardAdminrhController.php
 
 session_start();
 
-// Verificar si el usuario es adminrh (Administrador de Recursos Humanos)
+// Verificar si el usuario es superadmin o adminrh (Administrador de Recursos Humanos)
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
     !isset($_SESSION['user_role']) ||
-    !in_array($_SESSION['user_role'], ['superadmin', 'adminrh']) // Permitir 'superadmin' o 'adminpr'
+    !in_array($_SESSION['user_role'], ['superadmin', 'adminrh']) // Permitir 'superadmin' o 'adminrh'
 ) {
     echo json_encode(['error' => 'No autorizado']);
     exit();
@@ -118,7 +118,31 @@ try {
         'inactiveUsers' => $row['inactiveUsers'] ?? 0
     ];
 
-    // 10. Generar un hash de los datos para comparación en el frontend
+    // 10. Turnover de Empleados por Mes
+    // Contar el número de usuarios que se han desactivado cada mes
+    $sql = "SELECT 
+                MONTH(updated_at) as mes, 
+                COUNT(*) as total 
+            FROM users 
+            WHERE is_active = 0 AND updated_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+            GROUP BY mes 
+            ORDER BY mes";
+    $turnoverPerMonth = ejecutarConsultaArray($sql);
+    $response['turnoverPerMonth'] = $turnoverPerMonth ? $turnoverPerMonth : [];
+
+    // 11. Distribución de Empleados por Departamento
+    $sql = "SELECT 
+                a.area_name as departamento, 
+                COUNT(u.id) as total 
+            FROM users u
+            JOIN areas a ON u.area_id = a.id
+            WHERE u.is_active = 1
+            GROUP BY a.area_name
+            ORDER BY total DESC";
+    $employeeByDepartment = ejecutarConsultaArray($sql);
+    $response['employeeByDepartment'] = $employeeByDepartment ? $employeeByDepartment : [];
+
+    // 12. Generar un hash de los datos para comparación en el frontend
     $dataHash = md5(json_encode($response));
     $response['dataHash'] = $dataHash;
 

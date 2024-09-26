@@ -1,8 +1,9 @@
 <?php
 // superadmin_dashboard.php
 
-session_start();
-
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 // Verificar si el usuario ha iniciado sesión y es un superadministrador
 if (
     !isset($_SESSION['user_type']) ||
