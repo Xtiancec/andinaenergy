@@ -7,13 +7,12 @@ session_start();
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
-    $_SESSION['user_role'] !== 'user'
+    !isset($_SESSION['user_role']) ||
+    !in_array($_SESSION['user_role'], ['superadmin', 'adminpr','adminrh','user']) // Permitir 'superadmin' o 'adminpr'
 ) {
-    header("Location: ../../login.php"); // Asegúrate de que esta sea la URL correcta de login
+    echo json_encode(['error' => 'No autorizado']);
     exit();
 }
-
-
 require 'layout/header.php';
 require 'layout/navbar.php';
 require 'layout/sidebar.php';

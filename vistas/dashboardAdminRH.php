@@ -7,9 +7,10 @@ session_start();
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
-    $_SESSION['user_role'] !== 'superadmin'
+    !isset($_SESSION['user_role']) ||
+    !in_array($_SESSION['user_role'], ['superadmin', 'adminrh']) // Permitir 'superadmin' o 'adminpr'
 ) {
-    header("Location: ../login.php"); // Asegúrate de que esta sea la URL correcta de login
+    echo json_encode(['error' => 'No autorizado']);
     exit();
 }
 
@@ -162,14 +163,28 @@ require 'layout/sidebar.php';
         <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">Documentos Evaluados por Estado</h5>
+                    <h5 class="card-title mb-0">Documentos Evaluados por Estado (Usuarios)</h5>
                 </div>
                 <div class="card-body">
-                    <canvas id="documents-status-chart" height="150"></canvas>
+                    <canvas id="documents-status-chart-users" height="150"></canvas>
                 </div>
             </div>
         </div>
-        <!-- Gráfico Adicional (Opcional) -->
+        <!-- Gráfico de Documentos Evaluados por Estado (Candidatos) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Documentos Evaluados por Estado (Candidatos)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="documents-status-chart-applicants" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico Adicional: Usuarios Activos vs Inactivos -->
+    <div class="row mt-4">
         <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
@@ -180,8 +195,12 @@ require 'layout/sidebar.php';
                 </div>
             </div>
         </div>
+        <!-- Puedes añadir más gráficos o componentes aquí -->
     </div>
 </div>
+
+<!-- Contenedor para almacenar dataHash -->
+<div id="adminhrDashboardData" data-data-hash=""></div>
 
 <!-- Incluir jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

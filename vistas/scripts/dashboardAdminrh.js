@@ -12,18 +12,37 @@ $(document).ready(function () {
         "info": true
     });
 
+    // Variables para almacenar los gráficos
+    let usersChart;
+    let applicantsChart;
+    let documentsStatusChartUsers;
+    let documentsStatusChartApplicants;
+    let usersStatusChart;
+
+    let previousDataHash = null; // Almacena el hash de los datos anteriores
+
     // Función para actualizar el dashboard
     function actualizarDashboard() {
         $.ajax({
             url: '../controlador/DashboardAdminrhController.php',
             method: 'GET',
             dataType: 'json',
+            cache: false,
             success: function (data) {
                 // Verificar si hay error
                 if (data.error) {
-                    alert(data.error);
+                    console.error(data.error);
                     return;
                 }
+
+                // Verificar si los datos han cambiado usando el hash
+                if (previousDataHash === data.dataHash) {
+                    console.log('No hay cambios en los datos. No se actualizan los gráficos.');
+                    return; // No actualizar si no hay cambios
+                }
+
+                // Almacenar el nuevo hash para futuras comparaciones
+                previousDataHash = data.dataHash;
 
                 // Actualizar tarjetas
                 $('#total-users').text(data.totalUsers);
@@ -65,54 +84,57 @@ $(document).ready(function () {
             return e.total;
         });
 
-        // Destruir el gráfico anterior si existe
-        if (window.usersChart instanceof Chart) {
-            window.usersChart.destroy();
-        }
-
-        window.usersChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Usuarios Registrados',
-                    data: valores,
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { // Para Chart.js v3 y superior
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        },
-                        title: {
-                            display: true,
-                            text: 'Número de Usuarios'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Mes'
-                        }
-                    }
+        if (usersChart) {
+            // Actualizar datos
+            usersChart.data.labels = labels;
+            usersChart.data.datasets[0].data = valores;
+            usersChart.update();
+        } else {
+            // Crear el gráfico si no existe
+            usersChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Usuarios Registrados',
+                        data: valores,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
                 },
-                plugins: {
-                    tooltip: {
-                        enabled: true
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { // Para Chart.js v3 y superior
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Número de Usuarios'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Mes'
+                            }
+                        }
                     },
-                    legend: {
-                        display: false
+                    plugins: {
+                        tooltip: {
+                            enabled: true
+                        },
+                        legend: {
+                            display: false
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Función para actualizar el gráfico de Candidatos Registrados por Mes
@@ -125,54 +147,57 @@ $(document).ready(function () {
             return e.total;
         });
 
-        // Destruir el gráfico anterior si existe
-        if (window.applicantsChart instanceof Chart) {
-            window.applicantsChart.destroy();
-        }
-
-        window.applicantsChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Candidatos Registrados',
-                    data: valores,
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { // Para Chart.js v3 y superior
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        },
-                        title: {
-                            display: true,
-                            text: 'Número de Candidatos'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Mes'
-                        }
-                    }
+        if (applicantsChart) {
+            // Actualizar datos
+            applicantsChart.data.labels = labels;
+            applicantsChart.data.datasets[0].data = valores;
+            applicantsChart.update();
+        } else {
+            // Crear el gráfico si no existe
+            applicantsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Candidatos Registrados',
+                        data: valores,
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
                 },
-                plugins: {
-                    tooltip: {
-                        enabled: true
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { // Para Chart.js v3 y superior
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Número de Candidatos'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Mes'
+                            }
+                        }
                     },
-                    legend: {
-                        display: false
+                    plugins: {
+                        tooltip: {
+                            enabled: true
+                        },
+                        legend: {
+                            display: false
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Función para actualizar la tabla de Actividad Reciente
@@ -191,7 +216,7 @@ $(document).ready(function () {
 
     // Función para actualizar el gráfico de Documentos Evaluados por Estado (Usuarios)
     function actualizarGraficoDocumentsStatusUsers(documentsByStatusUsers) {
-        var ctx = document.getElementById('documents-status-chart').getContext('2d');
+        var ctx = document.getElementById('documents-status-chart-users').getContext('2d');
         var labels = documentsByStatusUsers.map(function (e) {
             return e.estado;
         });
@@ -199,49 +224,42 @@ $(document).ready(function () {
             return e.total;
         });
 
-        // Colores dinámicos
-        var backgroundColors = [
-            '#FF6384',
-            '#36A2EB',
-            '#FFCE56',
-            '#4BC0C0',
-            '#9966FF',
-            '#FF9F40'
-        ];
-
-        // Destruir el gráfico anterior si existe
-        if (window.documentsStatusChartUsers instanceof Chart) {
-            window.documentsStatusChartUsers.destroy();
-        }
-
-        window.documentsStatusChartUsers = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: valores,
-                    backgroundColor: backgroundColors.slice(0, labels.length),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        enabled: true
-                    },
-                    legend: {
-                        position: 'bottom'
+        if (documentsStatusChartUsers) {
+            // Actualizar datos
+            documentsStatusChartUsers.data.labels = labels;
+            documentsStatusChartUsers.data.datasets[0].data = valores;
+            documentsStatusChartUsers.update();
+        } else {
+            // Crear el gráfico si no existe
+            documentsStatusChartUsers = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: generateColorArray(labels.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            enabled: true
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Función para actualizar el gráfico de Documentos Evaluados por Estado (Candidatos)
     function actualizarGraficoDocumentsStatusApplicants(documentsByStatusApplicants) {
-        var ctx = document.getElementById('documents-status-chart').getContext('2d');
+        var ctx = document.getElementById('documents-status-chart-applicants').getContext('2d');
         var labels = documentsByStatusApplicants.map(function (e) {
             return e.estado;
         });
@@ -249,44 +267,37 @@ $(document).ready(function () {
             return e.total;
         });
 
-        // Colores dinámicos
-        var backgroundColors = [
-            '#FF6384',
-            '#36A2EB',
-            '#FFCE56',
-            '#4BC0C0',
-            '#9966FF',
-            '#FF9F40'
-        ];
-
-        // Destruir el gráfico anterior si existe
-        if (window.documentsStatusChartApplicants instanceof Chart) {
-            window.documentsStatusChartApplicants.destroy();
-        }
-
-        window.documentsStatusChartApplicants = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: valores,
-                    backgroundColor: backgroundColors.slice(0, labels.length),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    tooltip: {
-                        enabled: true
-                    },
-                    legend: {
-                        position: 'bottom'
+        if (documentsStatusChartApplicants) {
+            // Actualizar datos
+            documentsStatusChartApplicants.data.labels = labels;
+            documentsStatusChartApplicants.data.datasets[0].data = valores;
+            documentsStatusChartApplicants.update();
+        } else {
+            // Crear el gráfico si no existe
+            documentsStatusChartApplicants = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: valores,
+                        backgroundColor: generateColorArray(labels.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            enabled: true
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Función para actualizar el gráfico de Usuarios Activos vs Inactivos
@@ -295,65 +306,77 @@ $(document).ready(function () {
         var labels = ['Activos', 'Inactivos'];
         var valores = [usersStatus.activeUsers, usersStatus.inactiveUsers];
 
-        // Colores
-        var backgroundColors = [
-            '#28a745', // Verde para Activos
-            '#dc3545'  // Rojo para Inactivos
-        ];
-
-        // Destruir el gráfico anterior si existe
-        if (window.usersStatusChart instanceof Chart) {
-            window.usersStatusChart.destroy();
-        }
-
-        window.usersStatusChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Usuarios',
-                    data: valores,
-                    backgroundColor: backgroundColors,
-                    borderColor: backgroundColors,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { // Para Chart.js v3 y superior
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        },
-                        title: {
-                            display: true,
-                            text: 'Cantidad'
-                        }
-                    },
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Estado'
-                        }
-                    }
+        if (usersStatusChart) {
+            // Actualizar datos
+            usersStatusChart.data.datasets[0].data = valores;
+            usersStatusChart.update();
+        } else {
+            // Crear el gráfico si no existe
+            usersStatusChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Usuarios',
+                        data: valores,
+                        backgroundColor: [
+                            '#28a745', // Verde para Activos
+                            '#dc3545'  // Rojo para Inactivos
+                        ],
+                        borderColor: [
+                            '#28a745',
+                            '#dc3545'
+                        ],
+                        borderWidth: 1
+                    }]
                 },
-                plugins: {
-                    tooltip: {
-                        enabled: true
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { // Para Chart.js v3 y superior
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            },
+                            title: {
+                                display: true,
+                                text: 'Cantidad'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Estado'
+                            }
+                        }
                     },
-                    legend: {
-                        display: false
+                    plugins: {
+                        tooltip: {
+                            enabled: true
+                        },
+                        legend: {
+                            display: false
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+    }
+
+    // Función para generar colores aleatorios para los gráficos de pastel y doughnut
+    function generateColorArray(length) {
+        const colors = [];
+        for (let i = 0; i < length; i++) {
+            const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+            colors.push(color);
+        }
+        return colors;
     }
 
     // Llamar a la función para actualizar el dashboard al cargar la página
     actualizarDashboard();
 
-    // Opcional: Actualizar el dashboard cada cierto tiempo (ejemplo: cada 5 minutos)
-    setInterval(actualizarDashboard, 300000); // 300,000 ms = 5 minutos
+    // Actualizar el dashboard cada cierto tiempo (ejemplo: cada 5 segundos)
+    setInterval(actualizarDashboard, 5000); // 5000 ms = 5 segundos
 });

@@ -5,7 +5,7 @@ session_start();
 
 // Verificar si el usuario ha iniciado sesión
 if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'applicant' || $_SESSION['user_role'] !== 'postulante') {
-    header("Location: ../login.php");
+    header("Location: ../../login.php");
     exit();
 }
 
@@ -34,7 +34,7 @@ require 'layout/sidebar.php';
     <div class="col-lg-4 col-md-6">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body">
-                <h4 class="card-title text-primary"><i class="fa fa-file-upload"></i> Progreso de Documentos</h4>
+                <h4 class="card-title text-primary"><i class="fa fa-file"></i> Progreso de Documentos</h4>
                 <canvas id="documentsChart" style="max-height: 250px;"></canvas>
             </div>
         </div>
@@ -100,6 +100,26 @@ require 'layout/sidebar.php';
             <div class="card-body">
                 <h4 class="card-title text-success"><i class="fa fa-briefcase"></i> Experiencia Laboral</h4>
                 <canvas id="experienceChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de los Documentos -->
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h4 class="card-title text-secondary"><i class="fa fa-file-alt"></i> Estado de los Documentos</h4>
+                <canvas id="documentsStatusChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de Todos los Documentos Aprobados -->
+    <div class="col-lg-6 col-md-12">
+        <div class="card shadow-sm border-0 mb-4 text-center">
+            <div class="card-body">
+                <h4 class="card-title text-success"><i class="fa fa-thumbs-up"></i> Todos los Documentos Aprobados</h4>
+                <h1 id="allApprovedIndicator" style="font-size: 3rem;">&#10060;</h1> <!-- Por defecto, símbolo de X -->
             </div>
         </div>
     </div>

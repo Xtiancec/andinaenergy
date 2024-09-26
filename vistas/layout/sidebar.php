@@ -36,16 +36,16 @@ function hasAccess($required_roles = [], $required_types = [])
                         </a>
                         <ul aria-expanded="false" class="collapse">
                             <?php if ($user_role == 'superadmin'): ?>
-                                <li><a href="superadmin_dashboard.php"><i class="mdi mdi-view-dashboard"></i> Dashboard Superadmin</a></li>
+                                <li><a href="dashboardSuperadmin.php"><i class="mdi mdi-view-dashboard"></i> Dashboard Superadmin</a></li>
                             <?php endif; ?>
                             <?php if ($user_role == 'adminrh'): ?>
-                                <li><a href="adminrh_dashboard.php"><i class="mdi mdi-human-male-female"></i> Dashboard Admin RH</a></li>
+                                <li><a href="dashboardAdminRH.php"><i class="mdi mdi-human-male-female"></i> Dashboard Admin RH</a></li>
                             <?php endif; ?>
                             <?php if ($user_role == 'adminpr'): ?>
-                                <li><a href="adminpr_dashboard.php"><i class="mdi mdi-truck"></i> Dashboard Admin PR</a></li>
+                                <li><a href="dashboardAdminPR.php"><i class="mdi mdi-truck"></i> Dashboard Admin PR</a></li>
                             <?php endif; ?>
                             <?php if ($user_role == 'user'): ?>
-                                <li><a href="user_dashboard.php"><i class="mdi mdi-account"></i> Dashboard Usuario</a></li>
+                                <li><a href="dashboardUser.php"><i class="mdi mdi-account"></i> Dashboard Usuario</a></li>
                             <?php endif; ?>
                         </ul>
                     </li>
@@ -61,15 +61,16 @@ function hasAccess($required_roles = [], $required_types = [])
                             <span class="hide-menu"><b>CONFIGURACIÓN</b></span>
                         </a>
                         <ul aria-expanded="false" class="collapse">
+
                             <?php if (hasAccess(['superadmin', 'adminrh'])): ?>
-                                <li><a href="companies.php"><i class="mdi mdi-store"></i> Empresas</a></li>
-                                <li><a href="puestos.php"><i class="mdi mdi-account-settings-variant"></i> Puestos</a></li>
-                                <li><a href="asignar_documentos_puestos.php"><i class="mdi mdi-assignment"></i> Asignar Documentos a Puestos</a></li>
+                                <li><a href="areaDashboard.php"><i class="mdi mdi-store"></i> Asignacion de Empresa, Areas y Puestos</a></li>
+                                <li><a href="documentMandatory.php"><i class="mdi mdi-assignment"></i> Asignar Documentos a Puestos</a></li>
                             <?php endif; ?>
+
                             <?php if (hasAccess(['superadmin', 'adminpr'])): ?>
                                 <li><a href="proveedores.php"><i class="mdi mdi-truck"></i> Proveedores</a></li>
                             <?php endif; ?>
-                            <li><a href="documentos.php"><i class="mdi mdi-file-document"></i> Documentos</a></li>
+                            <li><a href="documentNameSupplier.php"><i class="mdi mdi-file-document"></i> Documentos Proveedores+----</a></li>
                         </ul>
                     </li>
                 <?php endif; ?>

@@ -9,7 +9,7 @@ if (
     $_SESSION['user_type'] !== 'user' ||
     $_SESSION['user_role'] !== 'superadmin'
 ) {
-    header("Location: ../login.php"); // Asegúrate de que esta sea la URL correcta de login
+    header("Location: ../../login.php"); // Asegúrate de que esta sea la URL correcta de login
     exit();
 }
 

@@ -1,3 +1,5 @@
+// scripts/dashboardApplicant.js
+
 document.addEventListener('DOMContentLoaded', function () {
     const applicantId = document.getElementById('dashboardData').dataset.applicantId;
 
@@ -8,6 +10,8 @@ document.addEventListener('DOMContentLoaded', function () {
     let educationChart;
     let documentTypeChart;
     let experienceChart;
+    let documentsStatusChart; // Nuevo gráfico
+    let allApprovedIndicator; // Indicador de aprobación
 
     let previousData = null;
 
@@ -48,6 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (educationChart) educationChart.destroy();
             if (documentTypeChart) documentTypeChart.destroy();
             if (experienceChart) experienceChart.destroy();
+            if (documentsStatusChart) documentsStatusChart.destroy();
 
             // Progreso de Documentos
             if (data.documents_progress.length > 0 && data.documents_progress[0].total_documentos > 0) {
@@ -55,51 +60,61 @@ document.addEventListener('DOMContentLoaded', function () {
                 documentsChart = new Chart(documentsChartCtx, {
                     type: 'pie',
                     data: {
-                        labels: ['Documentos Subidos', 'Total Documentos'],
+                        labels: ['Documentos Subidos', 'Faltantes'],
                         datasets: [{
-                            data: [data.documents_progress[0].documentos_subidos, data.documents_progress[0].total_documentos],
+                            data: [
+                                data.documents_progress[0].documentos_subidos, 
+                                data.documents_progress[0].total_documentos - data.documents_progress[0].documentos_subidos
+                            ],
                             backgroundColor: ['#36A2EB', '#FF6384']
                         }]
                     },
                     options: {
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Progreso de Documentos'
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Progreso de Documentos'
+                            }
                         }
                     }
                 });
             }
 
             // Historial de Accesos
-            const accessLogsChartCtx = document.getElementById('accessLogsChart').getContext('2d');
-            const labels = data.access_logs.map(log => log.fecha);
-            const accessData = data.access_logs.map(log => log.accesos);
-            accessLogsChart = new Chart(accessLogsChartCtx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Número de Accesos',
-                        data: accessData,
-                        backgroundColor: '#36A2EB'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: 'Historial de Accesos'
-                    },
-                    scales: {
-                        yAxes: [{
-                            ticks: {
-                                beginAtZero: true
-                            }
+            if (data.access_logs && data.access_logs.length > 0) {
+                const accessLogsChartCtx = document.getElementById('accessLogsChart').getContext('2d');
+                const labels = data.access_logs.map(log => log.fecha);
+                const accessData = data.access_logs.map(log => log.accesos);
+                accessLogsChart = new Chart(accessLogsChartCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Número de Accesos',
+                            data: accessData,
+                            backgroundColor: '#36A2EB'
                         }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Historial de Accesos'
+                            }
+                        },
+                        scales: {
+                            y: { // Chart.js v3+
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Estado de Evaluación de Documentos
             if (data.evaluation.length > 0) {
@@ -116,9 +131,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     options: {
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Estado de Evaluación de Documentos'
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Estado de Evaluación de Documentos'
+                            }
                         }
                     }
                 });
@@ -140,9 +157,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     options: {
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Estado del Proceso de Selección'
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Estado del Proceso de Selección'
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: { // Chart.js v3+
+                                beginAtZero: true,
+                                max: 1,
+                                ticks: {
+                                    stepSize: 1,
+                                    display: false
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
                         }
                     }
                 });
@@ -169,9 +209,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     options: {
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Progreso Educativo'
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Progreso Educativo'
+                            }
+                        },
+                        scales: {
+                            r: { // Radar chart uses 'r' for radial scale
+                                beginAtZero: true
+                            }
                         }
                     }
                 });
@@ -188,14 +235,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         labels: documentTypeLabels,
                         datasets: [{
                             data: documentTypeData,
-                            backgroundColor: ['#36A2EB', '#FF6384']
+                            backgroundColor: generateColorArray(documentTypeData.length)
                         }]
                     },
                     options: {
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Documentos Subidos por Tipo'
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Documentos Subidos por Tipo'
+                            }
                         }
                     }
                 });
@@ -217,24 +266,73 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     options: {
                         responsive: true,
-                        title: {
-                            display: true,
-                            text: 'Total de Años de Experiencia Laboral'
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Total de Años de Experiencia Laboral'
+                            }
                         },
                         scales: {
-                            yAxes: [{
+                            y: { // Chart.js v3+
+                                beginAtZero: true,
                                 ticks: {
-                                    beginAtZero: true
+                                    stepSize: 1,
+                                    precision: 0
                                 }
-                            }]
+                            }
                         }
                     }
                 });
             } else {
                 document.getElementById('experienceChart').parentElement.innerHTML = '<p class="text-muted">No hay experiencia registrada.</p>';
             }
+
+            // Nuevo: Estado de los Documentos
+            if (data.documents_status.length > 0) {
+                const documentsStatusChartCtx = document.getElementById('documentsStatusChart').getContext('2d');
+                const statusLabels = data.documents_status.map(item => item.state_name);
+                const statusData = data.documents_status.map(item => item.total);
+                documentsStatusChart = new Chart(documentsStatusChartCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusData,
+                            backgroundColor: generateColorArray(statusData.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Estado de los Documentos'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Nuevo: Indicador de Todos los Documentos Aprobados
+            if (data.all_documents_approved) {
+                document.getElementById('allApprovedIndicator').innerHTML = '&#10004;'; // Símbolo de Check
+                document.getElementById('allApprovedIndicator').style.color = 'green';
+            } else {
+                document.getElementById('allApprovedIndicator').innerHTML = '&#10060;'; // Símbolo de X
+                document.getElementById('allApprovedIndicator').style.color = 'red';
+            }
         })
         .catch(error => console.error('Error al cargar los datos del dashboard:', error));
+    }
+
+    // Función para generar colores aleatorios para los gráficos de pastel y doughnut
+    function generateColorArray(length) {
+        const colors = [];
+        for (let i = 0; i < length; i++) {
+            const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+            colors.push(color);
+        }
+        return colors;
     }
 
     // Cargar los datos cada 5 segundos y solo actualizar si cambian

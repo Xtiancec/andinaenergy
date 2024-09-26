@@ -3,20 +3,21 @@
 
 session_start();
 
-// Verificar si el usuario ha iniciado sesión y es un adminpr (administrador de proveedores)
+// Verificar si el usuario ha iniciado sesión y es un adminpr (Administrador de Proveedores)
 if (
     !isset($_SESSION['user_type']) ||
     $_SESSION['user_type'] !== 'user' ||
-    $_SESSION['user_role'] !== 'superadmin'
+    !isset($_SESSION['user_role']) ||
+    !in_array($_SESSION['user_role'], ['superadmin', 'adminpr']) // Permitir 'superadmin' o 'adminpr'
 ) {
-    header("Location: ../login.php"); // Asegúrate de que esta sea la URL correcta de login
+    echo json_encode(['error' => 'No autorizado']);
     exit();
 }
-
 require 'layout/header.php';
 require 'layout/navbar.php';
 require 'layout/sidebar.php';
 ?>
+
 <!-- Contenido del Dashboard del Administrador de Proveedores -->
 <div class="container-fluid">
     <!-- Título y Breadcrumb -->
@@ -161,6 +162,9 @@ require 'layout/sidebar.php';
     </div>
 </div>
 
+<!-- Contenedor para almacenar dataHash (opcional) -->
+<!-- <div id="adminprDashboardData" data-data-hash=""></div> -->
+
 <!-- Incluir jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Incluir Chart.js -->
@@ -168,6 +172,8 @@ require 'layout/sidebar.php';
 <!-- Incluir DataTables CSS y JS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- Incluir FontAwesome para iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Tu script personalizado -->
 <script src="scripts/dashboardAdminpr.js"></script>
 

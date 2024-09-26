@@ -1,16 +1,23 @@
-// scripts/dashboardSuppliers.js
+// scripts/dashboardSupplier.js
 
 $(document).ready(function () {
     // Inicializar DataTables para la tabla de documentos
     $('#tabla-documentos').DataTable({
-        "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
-        },
+        
         "paging": true,
         "searching": true,
         "ordering": true,
-        "info": true
+        "info": true,
+        "autoWidth": false,
+        "responsive": true
     });
+
+    // Variables para almacenar los gráficos
+    let documentsTypeChart;
+    let documentsStatusChart;
+    let mandatoryProgressBar;
+
+    let previousData = null;
 
     // Función para actualizar el dashboard
     function actualizarDashboard() {
@@ -18,12 +25,22 @@ $(document).ready(function () {
             url: '../controlador/DashboardSupplierController.php',
             method: 'GET',
             dataType: 'json',
+            cache: false,
             success: function (data) {
                 // Verificar si hay error
                 if (data.error) {
                     alert(data.error);
                     return;
                 }
+
+                // Comparar datos anteriores con los nuevos
+                if (JSON.stringify(previousData) === JSON.stringify(data)) {
+                    console.log('No hay cambios en los datos. No se actualizan los gráficos.');
+                    return; // No actualizar si no hay cambios
+                }
+
+                // Almacenar los nuevos datos para futuras comparaciones
+                previousData = data;
 
                 // Actualizar tarjetas
                 $('#total-documents').text(data.totalDocuments);
@@ -51,29 +68,22 @@ $(document).ready(function () {
 
     // Función para actualizar el gráfico de Documentos Subidos por Tipo
     function actualizarGraficoDocumentsType(documentsByType) {
-        var ctx = document.getElementById('documents-type-chart').getContext('2d');
-        var labels = documentsByType.map(function (e) {
-            return e.documentName;
-        });
-        var valores = documentsByType.map(function (e) {
-            return e.total;
-        });
+        const ctx = document.getElementById('documents-type-chart').getContext('2d');
+        const labels = documentsByType.map(e => e.documentName);
+        const valores = documentsByType.map(e => e.total);
 
         // Destruir el gráfico anterior si existe
-        if (window.documentsTypeChart instanceof Chart) {
-            window.documentsTypeChart.destroy();
+        if (documentsTypeChart) {
+            documentsTypeChart.destroy();
         }
 
-        window.documentsTypeChart = new Chart(ctx, {
+        documentsTypeChart = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: labels,
                 datasets: [{
                     data: valores,
-                    backgroundColor: [
-                        '#36A2EB', // Azul para Opcional
-                        '#FF6384'  // Rojo para Obligatorio
-                    ],
+                    backgroundColor: generateColorArray(valores.length),
                     borderWidth: 1
                 }]
             },
@@ -86,6 +96,10 @@ $(document).ready(function () {
                     },
                     legend: {
                         position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Documentos Subidos por Tipo'
                     }
                 }
             }
@@ -94,37 +108,34 @@ $(document).ready(function () {
 
     // Función para actualizar el gráfico de Documentos por Estado
     function actualizarGraficoDocumentsStatus(documentsByStatus) {
-        var ctx = document.getElementById('documents-status-chart').getContext('2d');
-        var labels = documentsByStatus.map(function (e) {
-            return e.state_name;
-        });
-        var valores = documentsByStatus.map(function (e) {
-            return e.total;
-        });
+        const ctx = document.getElementById('documents-status-chart').getContext('2d');
+        const labels = documentsByStatus.map(e => e.state_name);
+        const valores = documentsByStatus.map(e => e.total);
 
-        // Colores dinámicos
-        var backgroundColors = [
-            '#28a745', // Verde para Aprobado
-            '#ffc107', // Amarillo para Pendiente
-            '#dc3545', // Rojo para Rechazado
-            '#17a2b8', // Azul para Por Corregir
-            '#6c757d'  // Gris para Otros
-        ];
+        // Colores personalizados basados en el estado
+        const colorMap = {
+            'Aprobado': '#28a745',    // Verde
+            'Subido': '#17a2b8',      // Azul
+            'Rechazado': '#dc3545',   // Rojo
+            'Por Corregir': '#ffc107' // Amarillo
+            // Añade más si es necesario
+        };
+        const backgroundColors = labels.map(label => colorMap[label] || '#6c757d'); // Gris por defecto
 
         // Destruir el gráfico anterior si existe
-        if (window.documentsStatusChart instanceof Chart) {
-            window.documentsStatusChart.destroy();
+        if (documentsStatusChart) {
+            documentsStatusChart.destroy();
         }
 
-        window.documentsStatusChart = new Chart(ctx, {
+        documentsStatusChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Cantidad de Documentos',
                     data: valores,
-                    backgroundColor: backgroundColors.slice(0, labels.length),
-                    borderColor: backgroundColors.slice(0, labels.length),
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
                     borderWidth: 1
                 }]
             },
@@ -155,6 +166,10 @@ $(document).ready(function () {
                     },
                     legend: {
                         display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Documentos por Estado'
                     }
                 }
             }
@@ -163,7 +178,7 @@ $(document).ready(function () {
 
     // Función para actualizar el progreso de Documentos Obligatorios
     function actualizarProgresoObligatorios(progress, statusText) {
-        var progressBar = $('#mandatory-progress');
+        const progressBar = $('#mandatory-progress');
         progressBar.css('width', progress + '%');
         progressBar.attr('aria-valuenow', progress);
         progressBar.text(progress + '%');
@@ -173,32 +188,37 @@ $(document).ready(function () {
 
     // Función para actualizar la tabla de Documentos
     function actualizarTablaDocumentos(documentsList) {
-        var table = $('#tabla-documentos').DataTable();
+        const table = $('#tabla-documentos').DataTable();
         table.clear().draw();
         documentsList.forEach(function (item) {
-            var acciones = `
+            const acciones = `
                 <a href="${item.document_path}" class="btn btn-sm btn-success" target="_blank"><i class="fas fa-download"></i> Descargar</a>
                 <a href="delete_document_supplier.php?id=${item.id}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este documento?');"><i class="fas fa-trash"></i> Eliminar</a>
             `;
             table.row.add([
                 item.documentName,
-                capitalizeFirstLetter(item.document_type),
+                item.document_type,
                 item.state_name,
                 item.uploaded_at,
-                item.admin_observation ? item.admin_observation : '-',
+                item.admin_observation,
                 acciones
             ]).draw(false);
         });
     }
 
-    // Función para capitalizar la primera letra
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
+    // Función para generar colores aleatorios para los gráficos de pastel y doughnut
+    function generateColorArray(length) {
+        const colors = [];
+        for (let i = 0; i < length; i++) {
+            const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+            colors.push(color);
+        }
+        return colors;
     }
 
     // Llamar a la función para actualizar el dashboard al cargar la página
     actualizarDashboard();
 
-    // Opcional: Actualizar el dashboard cada cierto tiempo (ejemplo: cada 5 minutos)
-    setInterval(actualizarDashboard, 300000); // 300,000 ms = 5 minutos
+    // Actualizar el dashboard cada cierto tiempo (ejemplo: cada 5 segundos)
+    setInterval(actualizarDashboard, 5000); // 5000 ms = 5 segundos
 });

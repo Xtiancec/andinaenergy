@@ -10,7 +10,7 @@ if (
     !isset($_SESSION['user_role']) ||
     $_SESSION['user_role'] !== 'proveedor'
 ) {
-    header("Location: ../login.php"); // Asegúrate de que esta sea la URL correcta de login
+    header("Location: ../../login.php"); // Asegúrate de que esta sea la URL correcta de login
     exit();
 }
 
@@ -103,8 +103,9 @@ require 'layout/sidebar.php';
         </div>
     </div>
 
-    <!-- Gráfico de Documentos Subidos por Tipo -->
+    <!-- Gráfico de Documentos Subidos por Tipo y Documentos por Estado -->
     <div class="row mt-4">
+        <!-- Gráfico de Documentos Subidos por Tipo -->
         <div class="col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
@@ -139,7 +140,7 @@ require 'layout/sidebar.php';
                     <div class="progress mb-3">
                         <div class="progress-bar bg-info" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="mandatory-progress">0%</div>
                     </div>
-                    <p id="mandatory-status">Aún no has subido todos los documentos obligatorios.</p>
+                    <p id="mandatory-status">Aún no has aprobado todos los documentos obligatorios.</p>
                 </div>
             </div>
         </div>
@@ -182,13 +183,29 @@ require 'layout/sidebar.php';
 <!-- Incluir Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <!-- Incluir DataTables CSS y JS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<!-- Incluir FontAwesome para iconos -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- Tu script personalizado -->
-<script src="scripts/dashboardSupplier.js"></script>
+<!-- DataTables CSS -->
 
 <?php
 require 'layout/footer.php';
 ?>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Tu script personalizado -->
+<script src="scripts/dashboardSupplier.js"></script>
+
+<!-- Opcional: Personalizar colores de las tarjetas con CSS -->
+<style>
+    .card-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .card-body {
+        padding: 20px;
+    }
+    .card {
+        transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: scale(1.02);
+    }
+</style>
