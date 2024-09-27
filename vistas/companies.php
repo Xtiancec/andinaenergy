@@ -44,6 +44,7 @@ require 'layout/sidebar.php';
                         </button>
                     </div>
                 </div>
+                
                 <!-- Tabla para listar empresas -->
                 <div class="table-responsive mb-4 mt-4">
                     <table id="tbllistado" class="table table-striped table-bordered" style="width:100%">

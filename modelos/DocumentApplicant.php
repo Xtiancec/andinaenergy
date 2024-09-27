@@ -76,8 +76,9 @@ class DocumentApplicant
     // Evaluar el documento: Aprobar, Rechazar, Solicitar Corrección
     public function evaluarDocumento($id, $admin_observation, $state_id)
     {
+        // Asegurarse de que el campo 'reviewed_at' exista en la tabla 'documents_applicants'
         $sql = "UPDATE documents_applicants 
-                SET admin_observation = ?, state_id = ?, admin_reviewed = 1, uploaded_at = CURRENT_TIMESTAMP 
+                SET admin_observation = ?, state_id = ?, admin_reviewed = 1, reviewed_at = CURRENT_TIMESTAMP 
                 WHERE id = ?";
         $params = [$admin_observation, $state_id, $id];
         return ejecutarConsulta($sql, $params);
@@ -94,9 +95,13 @@ class DocumentApplicant
                     a.username,
                     a.email,
                     d.document_name, 
-                    d.state_id
+                    d.state_id,
+                    j.position_name AS job_name,
+                    c.company_name AS company_name
                 FROM documents_applicants d
-                JOIN applicants a ON d.applicant_id = a.id";
+                JOIN applicants a ON d.applicant_id = a.id
+                JOIN jobs j ON a.job_id = j.id
+                JOIN companies c ON a.company_id = c.id";
 
         $params = [];
 
@@ -133,6 +138,7 @@ class DocumentApplicant
                     d.admin_observation,
                     d.admin_reviewed,
                     d.uploaded_at,
+                    d.reviewed_at,
                     d.state_id,
                     s.state_name
                 FROM documents_applicants d
@@ -161,4 +167,3 @@ class DocumentApplicant
         }
     }
 }
-?>

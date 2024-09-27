@@ -3,52 +3,125 @@ require_once "../config/Conexion.php";
 
 class Experience
 {
-    // Insertar experiencia educativa
-    public function insertarEducacion($applicant_id, $institution, $education_type, $start_date, $end_date, $duration)
+    // Insertar o actualizar experiencia educativa
+    public function guardarEducacion($data)
     {
-        $sql = "INSERT INTO education_experience (applicant_id, institution, education_type, start_date, end_date, duration) 
-                VALUES ('$applicant_id', '$institution', '$education_type', '$start_date', '$end_date', '$duration')";
+        if (isset($data['educacion_id']) && !empty($data['educacion_id'])) {
+            // Actualizar experiencia educativa existente
+            $sql = "UPDATE education_experience 
+                    SET institution = ?, education_type = ?, start_date = ?, end_date = ?, duration = ?, duration_unit = ?, file_path = ?
+                    WHERE id = ?";
+            $params = [
+                $data['institution'],
+                $data['education_type'],
+                $data['start_date_education'],
+                $data['end_date_education'],
+                $data['duration_education'],
+                $data['duration_unit_education'],
+                isset($data['file_path']) ? $data['file_path'] : null, // Manejar file_path opcionalmente
+                $data['educacion_id']
+            ];
+            return ejecutarConsulta($sql, $params);
+        } else {
+            // Insertar nueva experiencia educativa
+            $sql = "INSERT INTO education_experience (applicant_id, institution, education_type, start_date, end_date, duration, duration_unit, file_path) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $params = [
+                $data['applicant_id'],
+                $data['institution'],
+                $data['education_type'],
+                $data['start_date_education'],
+                $data['end_date_education'],
+                $data['duration_education'],
+                $data['duration_unit_education'],
+                isset($data['file_path']) ? $data['file_path'] : null // Manejar file_path opcionalmente
+            ];
+            return ejecutarConsulta($sql, $params);
+        }
+    }
+
+    // Insertar o actualizar experiencia laboral
+    public function guardarTrabajo($data)
+    {
+        if (isset($data['trabajo_id']) && !empty($data['trabajo_id'])) {
+            // Actualizar experiencia laboral existente
+            $sql = "UPDATE work_experience 
+                    SET company = ?, position = ?, start_date = ?, end_date = ?, file_path = ?
+                    WHERE id = ?";
+            $params = [
+                $data['company'],
+                $data['position'],
+                $data['start_date_work'],
+                $data['end_date_work'],
+                isset($data['file_path']) ? $data['file_path'] : null, // Manejar file_path opcionalmente
+                $data['trabajo_id']
+            ];
+            return ejecutarConsulta($sql, $params);
+        } else {
+            // Insertar nueva experiencia laboral
+            $sql = "INSERT INTO work_experience (applicant_id, company, position, start_date, end_date, file_path) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
+            $params = [
+                $data['applicant_id'],
+                $data['company'],
+                $data['position'],
+                $data['start_date_work'],
+                $data['end_date_work'],
+                isset($data['file_path']) ? $data['file_path'] : null // Manejar file_path opcionalmente
+            ];
+            return ejecutarConsulta($sql, $params);
+        }
+    }
+
+    // Mostrar experiencias educativas
+    public function mostrarEducacion($applicant_id)
+    {
+        $applicant_id = intval($applicant_id);
+        $sql = "SELECT * FROM education_experience WHERE applicant_id = $applicant_id";
+        $result = ejecutarConsulta($sql);
+
+        if ($result !== false && $result->num_rows > 0) {
+            $data = [];
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+            return $data;
+        } else {
+            return []; // Retorna un array vacío si no hay resultados
+        }
+    }
+
+    // Mostrar experiencias laborales
+    public function mostrarTrabajo($applicant_id)
+    {
+        $applicant_id = intval($applicant_id);
+        $sql = "SELECT * FROM work_experience WHERE applicant_id = $applicant_id";
+        $result = ejecutarConsulta($sql);
+
+        if ($result !== false && $result->num_rows > 0) {
+            $data = [];
+            while ($row = $result->fetch_assoc()) {
+                $data[] = $row;
+            }
+            return $data;
+        } else {
+            return []; // Retorna un array vacío si no hay resultados
+        }
+    }
+
+    // Eliminar experiencia educativa
+    public function eliminarEducacion($id)
+    {
+        $id = intval($id);
+        $sql = "DELETE FROM education_experience WHERE id = $id";
         return ejecutarConsulta($sql);
     }
 
-    // Insertar experiencia laboral
-    public function insertarTrabajo($applicant_id, $company, $position, $start_date, $end_date)
+    // Eliminar experiencia laboral
+    public function eliminarTrabajo($id)
     {
-        $sql = "INSERT INTO work_experience (applicant_id, company, position, start_date, end_date) 
-                VALUES ('$applicant_id', '$company', '$position', '$start_date', '$end_date')";
-        return ejecutarConsulta($sql);
-    }
-    
-
-    // Mostrar experiencia educativa
-    public function mostrarEducation($applicant_id)
-    {
-        $sql = "SELECT * FROM education_experience WHERE applicant_id='$applicant_id'";
-        return ejecutarConsultaArray($sql); // Devolver todas las filas
-    }
-
-    // Obtener las experiencias laborales por el ID del postulante
-    public function mostrarWork($applicant_id)
-    {
-        $sql = "SELECT * FROM education_experience WHERE applicant_id='$applicant_id'";
-        return ejecutarConsultaArray($sql); // Devolver todas las filas
-    }
-
-    // Editar experiencia educativa
-    public function editarEducacion($id, $institution, $education_type, $start_date, $end_date, $duration)
-    {
-        $sql = "UPDATE education_experience 
-                SET institution='$institution', education_type='$education_type', start_date='$start_date', end_date='$end_date', duration='$duration' 
-                WHERE id='$id'";
-        return ejecutarConsulta($sql);
-    }
-
-    // Editar experiencia laboral
-    public function editarTrabajo($id, $company, $position, $start_date, $end_date)
-    {
-        $sql = "UPDATE work_experience 
-                SET company='$company', position='$position', start_date='$start_date', end_date='$end_date' 
-                WHERE id='$id'";
+        $id = intval($id);
+        $sql = "DELETE FROM work_experience WHERE id = $id";
         return ejecutarConsulta($sql);
     }
 }

@@ -514,7 +514,7 @@ require 'layout/sidebar.php';
                                     <!-- Botón de actualización -->
                                     <div class="col-auto mb-2 mx-2">
                                         <button type="submit" class="btn btn-primary btn-lg rounded-lg font-weight-bold">
-                                            <i class="fa fa-sync-alt"></i> Actualizar Datos
+                                            <i class="fa fa-sync"></i> Actualizar Datos
                                         </button>
                                     </div>
 

@@ -1,13 +1,39 @@
 <?php
-// controladores/ApplicantDocumentsController.php
+// controlador/DocumentEvaluationController.php
 
 require "../config/Conexion.php";
 require_once "../modelos/DocumentApplicant.php";
+require_once "../modelos/Experience.php";
 
 class DocumentEvaluationController
 {
+    // Constructor para iniciar la sesión
+    public function __construct()
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
+    // Método para verificar si el usuario es superadministrador
+    private function verificarSuperadmin()
+    {
+        if (
+            !isset($_SESSION['user_type']) ||
+            $_SESSION['user_type'] !== 'user' ||
+            !isset($_SESSION['user_role']) ||
+            $_SESSION['user_role'] !== 'superadmin'
+        ) {
+            echo json_encode(['success' => false, 'message' => 'Acceso no autorizado']);
+            exit();
+        }
+    }
+
     // Listar postulantes con porcentajes de documentos subidos y aprobados
-    public function listarApplicants() {
+    public function listarApplicants()
+    {
+        $this->verificarSuperadmin();
+
         // Obtener los filtros de fecha si existen
         $start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? $_GET['start_date'] : null;
         $end_date = isset($_GET['end_date']) && !empty($_GET['end_date']) ? $_GET['end_date'] : null;
@@ -22,6 +48,8 @@ class DocumentEvaluationController
                 $applicantId = $doc['applicant_id'];
                 if (!isset($applicants[$applicantId])) {
                     $applicants[$applicantId] = [
+                        'company_name' => $doc['company_name'],
+                        'job_name' => $doc['job_name'],
                         'id' => $applicantId,
                         'names' => $doc['applicant_name'],
                         'lastname' => $doc['lastname'],
@@ -66,6 +94,8 @@ class DocumentEvaluationController
                 $porcentaje_aprobados_other = $applicant['total_required_other'] > 0 ? round(min($applicant['total_approved_other'] / $applicant['total_required_other'], 1) * 100, 2) : 0;
 
                 $applicantsList[] = [
+                    'company_name' => $applicant['company_name'],
+                    'job_name' => $applicant['job_name'],
                     'id' => $applicant['id'],
                     'names' => $applicant['names'],
                     'lastname' => $applicant['lastname'],
@@ -87,8 +117,10 @@ class DocumentEvaluationController
     // Obtener documentos subidos por un postulante
     public function documentosApplicant()
     {
+        $this->verificarSuperadmin();
+
         // Obtener los filtros de fecha si existen
-        $applicant_id = intval($_POST['applicant_id']);
+        $applicant_id = isset($_POST['applicant_id']) ? intval($_POST['applicant_id']) : 0;
         $start_date = isset($_POST['start_date']) && !empty($_POST['start_date']) ? $_POST['start_date'] : null;
         $end_date = isset($_POST['end_date']) && !empty($_POST['end_date']) ? $_POST['end_date'] : null;
 
@@ -120,15 +152,17 @@ class DocumentEvaluationController
     // Cambiar estado de un documento
     public function cambiarEstadoDocumento()
     {
-        $document_id = intval($_POST['document_id']);
-        $estado_id = intval($_POST['estado_id']);
-        $observacion = isset($_POST['observacion']) ? $_POST['observacion'] : NULL;
+        $this->verificarSuperadmin();
+
+        $document_id = isset($_POST['document_id']) ? intval($_POST['document_id']) : 0;
+        $estado_id = isset($_POST['estado_id']) ? intval($_POST['estado_id']) : 0;
+        $observacion = isset($_POST['observacion']) ? trim($_POST['observacion']) : NULL;
 
         // Validar que el estado_id sea válido
         $valid_estados = [2, 3, 4]; // 2: Aprobado, 3: Rechazado, 4: Por Corregir
         if (!in_array($estado_id, $valid_estados)) {
             echo json_encode(['success' => false, 'message' => 'Estado inválido.']);
-            exit;
+            exit();
         }
 
         $documentApplicant = new DocumentApplicant();
@@ -136,7 +170,7 @@ class DocumentEvaluationController
 
         if (!$document) {
             echo json_encode(['success' => false, 'message' => 'Documento no encontrado.']);
-            exit;
+            exit();
         }
 
         // Actualizar el estado del documento
@@ -147,6 +181,48 @@ class DocumentEvaluationController
         } else {
             echo json_encode(['success' => false, 'message' => 'Error al actualizar el estado.']);
         }
+    }
+
+    // Obtener experiencia educativa de un postulante
+    public function obtenerEducacion()
+    {
+        $this->verificarSuperadmin();
+
+        $applicantId = isset($_GET['applicant_id']) ? intval($_GET['applicant_id']) : 0;
+
+        if ($applicantId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID de postulante inválido.']);
+            exit();
+        }
+
+        $experience = new Experience();
+        $educaciones = $experience->mostrarEducacion($applicantId);
+
+        echo json_encode([
+            'success' => true,
+            'educaciones' => $educaciones
+        ]);
+    }
+
+    // Obtener experiencia laboral de un postulante
+    public function obtenerTrabajo()
+    {
+        $this->verificarSuperadmin();
+
+        $applicantId = isset($_GET['applicant_id']) ? intval($_GET['applicant_id']) : 0;
+
+        if ($applicantId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID de postulante inválido.']);
+            exit();
+        }
+
+        $experience = new Experience();
+        $trabajos = $experience->mostrarTrabajo($applicantId);
+
+        echo json_encode([
+            'success' => true,
+            'trabajos' => $trabajos
+        ]);
     }
 }
 
@@ -163,7 +239,16 @@ if (isset($_GET['op'])) {
         case 'cambiarEstadoDocumento':
             $controller->cambiarEstadoDocumento();
             break;
+        case 'obtenerEducacion':
+            $controller->obtenerEducacion();
+            break;
+        case 'obtenerTrabajo':
+            $controller->obtenerTrabajo();
+            break;
         // Otros casos si los hay
+        default:
+            echo json_encode(['success' => false, 'message' => 'Operación no válida.']);
+            break;
     }
 }
 ?>

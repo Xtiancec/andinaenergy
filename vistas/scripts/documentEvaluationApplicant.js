@@ -1,37 +1,32 @@
-// scripts/applicants_documents.js
+// admin/scripts/documentEvaluationApplicant.js
 
 $(document).ready(function () {
-    listarApplicants();
-
-    // Manejar el envío del formulario de filtros
-    $('#filtroForm').on('submit', function (e) {
-        e.preventDefault();
-        listarApplicants();
-    });
-
-    // Manejar el reset del filtro
-    $('#resetFilter').on('click', function () {
-        $('#startDate').val('');
-        $('#endDate').val('');
-        listarApplicants();
-    });
-});
-
-function listarApplicants() {
-    // Obtener los valores de los filtros
-    var startDate = $('#startDate').val();
-    var endDate = $('#endDate').val();
-
+    // Inicializar DataTable
     var tabla = $('#applicantsTable').DataTable({
         ajax: {
             url: '../controlador/DocumentEvaluationController.php?op=listarApplicants',
             type: "GET",
             dataType: "json",
-            dataSrc: 'applicants',
+            dataSrc: function (json) {
+                if (json.success) {
+                    return json.applicants;
+                } else {
+                    Toastify({
+                        text: json.message || "Error al cargar los postulantes.",
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                        stopOnFocus: true,
+                    }).showToast();
+                    return [];
+                }
+            },
             data: function (d) {
-                // Añadir los filtros al objeto de datos
-                d.start_date = startDate;
-                d.end_date = endDate;
+                // Obtener los valores de los filtros
+                d.start_date = $('#startDate').val();
+                d.end_date = $('#endDate').val();
             },
             error: function (e) {
                 console.error("Error al cargar los datos: ", e.responseText);
@@ -47,66 +42,69 @@ function listarApplicants() {
             }
         },
         columns: [
-            { 
-                "data": null, 
-                "render": function(data) {
-                    return `${data.names} ${data.lastname} (${data.username})`;
+            { "data": "company_name" },
+            { "data": "job_name" },
+            {
+                "data": null,
+                "render": function (data) {
+                    return `${data.username} (${data.names} ${data.lastname} )`;
                 }
             },
             { "data": "email" },
-            { 
+            {
                 "data": "porcentaje_subidos_cv",
-                "render": function(data) {
+                "render": function (data) {
                     return crearBarraProgreso(data, 'bg-info');
                 },
                 "orderable": false
             },
-            { 
+            {
                 "data": "porcentaje_subidos_other",
-                "render": function(data) {
-                    return crearBarraProgreso(data, 'bg-info');
+                "render": function (data) {
+                    return crearBarraProgreso(data, 'bg-warning');
                 },
                 "orderable": false
             },
-            { 
+            {
                 "data": "porcentaje_aprobados_cv",
-                "render": function(data) {
+                "render": function (data) {
                     return crearBarraProgreso(data, 'bg-success');
                 },
                 "orderable": false
             },
-            { 
+            {
                 "data": "porcentaje_aprobados_other",
-                "render": function(data) {
-                    return crearBarraProgreso(data, 'bg-success');
+                "render": function (data) {
+                    return crearBarraProgreso(data, 'bg-primary');
                 },
                 "orderable": false
             },
-            { 
+            {
                 "data": null,
-                "render": function(data) {
+                "render": function (data, type, row) {
                     return `
-                        <button class="btn btn-primary btn-sm btn-ver-documentos" data-id="${data.id}" data-nombre="${data.names} ${data.lastname}">
-                            <i class="fa fa-eye"></i> Ver Documentos
-                        </button>`;
+                        <button class="btn btn-primary btn-sm btn-ver-detalles" data-id="${row.id}" data-nombre="${row.names} ${row.lastname}" title="Ver Detalles">
+                            <i class="fas fa-eye"></i> Ver Detalles
+                        </button>
+                    `;
                 },
                 "orderable": false
             }
         ],
         language: {
             // Opciones de idioma (personalizar según sea necesario)
-            "sProcessing":     "Procesando...",
-            "sLengthMenu":     "Mostrar _MENU_ registros",
-            "sZeroRecords":    "No se encontraron resultados",
-            "sEmptyTable":     "Ningún dato disponible en esta tabla",
-            "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
-            "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
-            "sSearch":         "Buscar:",
+            "sProcessing": "Procesando...",
+            "sLengthMenu": "Mostrar _MENU_ registros",
+            "sZeroRecords": "No se encontraron resultados",
+            "sEmptyTable": "Ningún dato disponible en esta tabla",
+            "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+            "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+            "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+            "sSearch": "Buscar:",
             "oPaginate": {
-                "sFirst":    "Primero",
-                "sLast":     "Último",
-                "sNext":     "Siguiente",
+                "sFirst": "Primero",
+                "sLast": "Último",
+                "sNext": "Siguiente",
                 "sPrevious": "Anterior"
             },
         },
@@ -114,42 +112,79 @@ function listarApplicants() {
         destroy: true,
         order: [[0, "asc"]]
     });
-}
 
-function crearBarraProgreso(valor, clase) {
-    return `
-        <div class="progress" style="height: 20px;">
-            <div class="progress-bar ${clase}" role="progressbar" style="width: ${valor}%" aria-valuenow="${valor}" aria-valuemin="0" aria-valuemax="100">${valor}%</div>
-        </div>`;
-}
+    // Manejar el envío del formulario de filtros
+    $('#filtroForm').on('submit', function (e) {
+        e.preventDefault();
+        tabla.ajax.reload();
+    });
 
-// Al hacer clic en "Ver Documentos"
-$(document).on('click', '.btn-ver-documentos', function () {
-    var applicantId = $(this).data('id');
-    var applicantName = $(this).data('nombre');
-    $('#applicantNombre').text(applicantName);
-    cargarDocumentosApplicant(applicantId);
-    $('#modalDocumentosApplicant').modal('show');
+    // Manejar el reset del filtro
+    $('#resetFilter').on('click', function () {
+        $('#filtroForm')[0].reset();
+        tabla.ajax.reload();
+    });
+
+    // Al hacer clic en "Ver Detalles"
+    $(document).on('click', '.btn-ver-detalles', function () {
+        var applicantId = $(this).data('id');
+        var applicantName = $(this).data('nombre');
+        $('#applicantNombre').text(applicantName);
+        cargarDetallesApplicant(applicantId);
+        $('#modalDetallesApplicant').modal('show');
+    });
 });
 
-// Cargar los documentos subidos por el postulante
-function cargarDocumentosApplicant(applicantId) {
-    // Obtener los valores de los filtros actuales
-    var startDate = $('#startDate').val();
-    var endDate = $('#endDate').val();
+/**
+ * Función para crear una barra de progreso
+ * @param {number} valor - Porcentaje de progreso
+ * @param {string} clase - Clase de Bootstrap para el color
+ * @returns {string} - HTML de la barra de progreso
+ */
+function crearBarraProgreso(valor, clase) {
+    // Asegúrate de que el porcentaje esté entre 0 y 100
+    valor = Math.min(Math.max(valor, 0), 100);
+    return `
+        <div class="progress">
+            <div class="progress-bar ${clase}" role="progressbar" style="width: ${valor}%" aria-valuenow="${valor}" aria-valuemin="0" aria-valuemax="100">
+                ${valor}%
+            </div>
+        </div>
+    `;
+}
 
+/**
+ * Función para cargar los detalles del postulante en el modal
+ * @param {number} applicantId - ID del postulante
+ */
+function cargarDetallesApplicant(applicantId) {
+    // Limpiar contenedores
+    $('#documentosApplicantContainer').html('<p>Cargando documentos...</p>');
+    $('#educacionApplicantContainer').html('<p>Cargando experiencia educativa...</p>');
+    $('#trabajoApplicantContainer').html('<p>Cargando experiencia laboral...</p>');
+
+    // Cargar Documentos
+    cargarDocumentosApplicant(applicantId);
+
+    // Cargar Experiencia Educativa
+    cargarEducacionApplicant(applicantId);
+
+    // Cargar Experiencia Laboral
+    cargarTrabajoApplicant(applicantId);
+}
+
+/**
+ * Cargar los documentos subidos por el postulante
+ * @param {number} applicantId - ID del postulante
+ */
+function cargarDocumentosApplicant(applicantId) {
     $.ajax({
         url: '../controlador/DocumentEvaluationController.php?op=documentosApplicant',
         method: 'POST',
-        data: { 
-            applicant_id: applicantId,
-            start_date: startDate,
-            end_date: endDate
-        },
+        data: { applicant_id: applicantId },
         dataType: 'json',
         success: function (data) {
             if (data.success) {
-                // Renderizar documentos
                 renderizarDocumentosApplicant(data.cv_documents, data.other_documents, '#documentosApplicantContainer', applicantId);
             } else {
                 console.error(data.message);
@@ -163,12 +198,20 @@ function cargarDocumentosApplicant(applicantId) {
     });
 }
 
+/**
+ * Renderizar los documentos en el contenedor especificado
+ * @param {Array} cv_documents - Lista de CVs
+ * @param {Array} other_documents - Lista de otros documentos
+ * @param {string} containerSelector - Selector del contenedor
+ * @param {number} applicantId - ID del postulante
+ */
 function renderizarDocumentosApplicant(cv_documents, other_documents, containerSelector, applicantId) {
     var html = '';
 
+    // Documentos de CV
     html += '<h5>CV</h5>';
     if (cv_documents.length === 0) {
-        html += '<p>No hay CV subido.</p>';
+        html += '<p>No hay CVs subidos.</p>';
     } else {
         html += '<ul class="list-group mb-3">';
         cv_documents.forEach(function (doc) {
@@ -177,6 +220,7 @@ function renderizarDocumentosApplicant(cv_documents, other_documents, containerS
         html += '</ul>';
     }
 
+    // Otros Documentos
     html += '<h5>Otros Documentos</h5>';
     if (other_documents.length === 0) {
         html += '<p>No hay otros documentos subidos.</p>';
@@ -191,12 +235,18 @@ function renderizarDocumentosApplicant(cv_documents, other_documents, containerS
     $(containerSelector).html(html);
 }
 
+/**
+ * Generar el HTML para un item de documento
+ * @param {Object} doc - Objeto del documento
+ * @param {number} applicantId - ID del postulante
+ * @returns {string} - HTML del item
+ */
 function generarItemDocumento(doc, applicantId) {
     return `
         <li class="list-group-item" id="documento_${doc.document_id}">
             <div>
                 <p><strong>${doc.original_file_name}</strong> (${doc.state_name})</p>
-                <p><a href="${doc.document_path}" target="_blank">Ver Documento</a></p>
+                <p><a href="${doc.document_path}" target="_blank" class="text-primary">Ver Documento</a></p>
                 <p><strong>Observación del Usuario:</strong> ${doc.user_observation || 'Sin observación'}</p>
             </div>
             <div class="mt-2">
@@ -206,11 +256,136 @@ function generarItemDocumento(doc, applicantId) {
                     <textarea class="form-control admin-observation" id="observacion_${doc.document_id}" rows="2">${doc.admin_observation || ''}</textarea>
                 </div>
                 <!-- Botones de acción -->
-                <button class="btn btn-success btn-sm btn-aprobar" data-id="${doc.document_id}" data-applicant="${applicantId}">Aprobar</button>
-                <button class="btn btn-warning btn-sm btn-solicitar-correccion" data-id="${doc.document_id}" data-applicant="${applicantId}">Solicitar Corrección</button>
-                <button class="btn btn-danger btn-sm btn-rechazar" data-id="${doc.document_id}" data-applicant="${applicantId}">Rechazar</button>
+                <button class="btn btn-success btn-sm btn-aprobar" data-id="${doc.document_id}" data-applicant="${applicantId}" title="Aprobar">
+                    <i class="fas fa-check"></i> Aprobar
+                </button>
+                <button class="btn btn-warning btn-sm btn-solicitar-correccion" data-id="${doc.document_id}" data-applicant="${applicantId}" title="Solicitar Corrección">
+                    <i class="fas fa-edit"></i> Solicitar Corrección
+                </button>
+                <button class="btn btn-danger btn-sm btn-rechazar" data-id="${doc.document_id}" data-applicant="${applicantId}" title="Rechazar">
+                    <i class="fas fa-times"></i> Rechazar
+                </button>
             </div>
         </li>`;
+}
+
+/**
+ * Cargar la experiencia educativa del postulante
+ * @param {number} applicantId - ID del postulante
+ */
+function cargarEducacionApplicant(applicantId) {
+    $.ajax({
+        url: '../controlador/DocumentEvaluationController.php?op=obtenerEducacion',
+        method: 'GET',
+        data: { applicant_id: applicantId },
+        dataType: 'json',
+        success: function (data) {
+            if (data.success) {
+                renderizarEducacionApplicant(data.educaciones, '#educacionApplicantContainer');
+            } else {
+                console.error(data.message);
+                $('#educacionApplicantContainer').html(`<p class="text-danger">${data.message}</p>`);
+            }
+        },
+        error: function (e) {
+            console.error("Error al cargar la experiencia educativa: ", e.responseText);
+            $('#educacionApplicantContainer').html('<p class="text-danger">Ocurrió un error al cargar la experiencia educativa.</p>');
+        }
+    });
+}
+
+/**
+ * Renderizar la experiencia educativa en el contenedor especificado
+ * @param {Array} educaciones - Lista de experiencias educativas
+ * @param {string} containerSelector - Selector del contenedor
+ */
+function renderizarEducacionApplicant(educaciones, containerSelector) {
+    var html = '';
+
+    if (educaciones.length === 0) {
+        html += '<p>No hay experiencias educativas registradas.</p>';
+    } else {
+        html += '<ul class="list-group">';
+        educaciones.forEach(function (edu) {
+            html += `
+                <li class="list-group-item">
+                    <strong>${edu.institution}</strong> - ${edu.education_type}<br>
+                    <small>${formatDate(edu.start_date)} - ${formatDate(edu.end_date)}</small><br>
+                    <small>Duración: ${edu.duration} ${edu.duration_unit}</small><br>
+                    ${edu.file_path ? `<a href="../${edu.file_path}" target="_blank" class="text-primary">Ver Archivo</a>` : 'Sin Archivo'}
+                </li>
+            `;
+        });
+        html += '</ul>';
+    }
+
+    $(containerSelector).html(html);
+}
+
+/**
+ * Cargar la experiencia laboral del postulante
+ * @param {number} applicantId - ID del postulante
+ */
+function cargarTrabajoApplicant(applicantId) {
+    $.ajax({
+        url: '../controlador/DocumentEvaluationController.php?op=obtenerTrabajo',
+        method: 'GET',
+        data: { applicant_id: applicantId },
+        dataType: 'json',
+        success: function (data) {
+            if (data.success) {
+                renderizarTrabajoApplicant(data.trabajos, '#trabajoApplicantContainer');
+            } else {
+                console.error(data.message);
+                $('#trabajoApplicantContainer').html(`<p class="text-danger">${data.message}</p>`);
+            }
+        },
+        error: function (e) {
+            console.error("Error al cargar la experiencia laboral: ", e.responseText);
+            $('#trabajoApplicantContainer').html('<p class="text-danger">Ocurrió un error al cargar la experiencia laboral.</p>');
+        }
+    });
+}
+
+/**
+ * Renderizar la experiencia laboral en el contenedor especificado
+ * @param {Array} trabajos - Lista de experiencias laborales
+ * @param {string} containerSelector - Selector del contenedor
+ */
+function renderizarTrabajoApplicant(trabajos, containerSelector) {
+    var html = '';
+
+    if (trabajos.length === 0) {
+        html += '<p>No hay experiencias laborales registradas.</p>';
+    } else {
+        html += '<ul class="list-group">';
+        trabajos.forEach(function (trab) {
+            html += `
+                <li class="list-group-item">
+                    <strong>${trab.company}</strong> - ${trab.position}<br>
+                    <small>${formatDate(trab.start_date)} - ${formatDate(trab.end_date)}</small><br>
+                    ${trab.file_path ? `<a href="../${trab.file_path}" target="_blank" class="text-primary">Ver Archivo</a>` : 'Sin Archivo'}
+                </li>
+            `;
+        });
+        html += '</ul>';
+    }
+
+    $(containerSelector).html(html);
+}
+
+/**
+ * Formatear la fecha en formato DD/MM/YYYY
+ * @param {string} dateStr - Fecha en formato YYYY-MM-DD
+ * @returns {string} - Fecha formateada
+ */
+function formatDate(dateStr) {
+    if (!dateStr) return 'Presente';
+    var date = new Date(dateStr);
+    var day = ("0" + date.getDate()).slice(-2);
+    var month = ("0" + (date.getMonth() + 1)).slice(-2);
+    var year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 // Eventos para cambiar estado de documentos
@@ -218,13 +393,17 @@ $(document).on('click', '.btn-aprobar, .btn-solicitar-correccion, .btn-rechazar'
     var documentId = $(this).data('id');
     var applicantId = $(this).data('applicant');
     var estadoId;
+    var accion;
 
     if ($(this).hasClass('btn-aprobar')) {
         estadoId = 2; // Aprobado
+        accion = 'aprobar';
     } else if ($(this).hasClass('btn-solicitar-correccion')) {
         estadoId = 4; // Por Corregir
+        accion = 'solicitar corrección';
     } else if ($(this).hasClass('btn-rechazar')) {
         estadoId = 3; // Rechazado
+        accion = 'rechazar';
     }
 
     var observacion = $(`#observacion_${documentId}`).val();
@@ -240,23 +419,8 @@ $(document).on('click', '.btn-aprobar, .btn-solicitar-correccion, .btn-rechazar'
     }
 
     // Confirmación antes de proceder
-    var accionTexto = '';
-    switch (estadoId) {
-        case 2:
-            accionTexto = 'aprobar';
-            break;
-        case 3:
-            accionTexto = 'rechazar';
-            break;
-        case 4:
-            accionTexto = 'solicitar corrección';
-            break;
-        default:
-            accionTexto = 'realizar esta acción';
-    }
-
     Swal.fire({
-        title: `¿Estás seguro de ${accionTexto} este documento?`,
+        title: `¿Estás seguro de ${accion} este documento?`,
         text: `Una vez confirmada, la acción no podrá deshacerse.`,
         icon: 'question',
         showCancelButton: true,
@@ -269,7 +433,13 @@ $(document).on('click', '.btn-aprobar, .btn-solicitar-correccion, .btn-rechazar'
     });
 });
 
-// Función para cambiar el estado del documento
+/**
+ * Función para cambiar el estado del documento
+ * @param {number} documentId - ID del documento
+ * @param {number} estadoId - Nuevo estado
+ * @param {number} applicantId - ID del postulante
+ * @param {string} observacion - Observación del administrador
+ */
 function cambiarEstadoDocumento(documentId, estadoId, applicantId, observacion) {
     $.ajax({
         url: '../controlador/DocumentEvaluationController.php?op=cambiarEstadoDocumento',
@@ -344,7 +514,9 @@ function cambiarEstadoDocumento(documentId, estadoId, applicantId, observacion) 
     });
 }
 
-// Función para actualizar el DataTable de postulantes
+/**
+ * Función para actualizar el DataTable de postulantes
+ */
 function actualizarApplicantsTable() {
     var table = $('#applicantsTable').DataTable();
     table.ajax.reload(null, false); // false para no resetear la paginación
