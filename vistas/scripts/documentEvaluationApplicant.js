@@ -47,6 +47,7 @@ $(document).ready(function () {
             {
                 "data": null,
                 "render": function (data) {
+<<<<<<< HEAD
                     let photoUrl = data.photo && data.photo !== 'NULL'
                         ? data.photo
                         : '/rh/app/template/images/default_photo.png';
@@ -59,6 +60,9 @@ $(document).ready(function () {
                 "data": null,
                 "render": function (data) {
                     return `${data.username} (${data.names} ${data.lastname})`;
+=======
+                    return `${data.username} (${data.names} ${data.lastname} )`;
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
                 }
             },
             { "data": "email" },
@@ -123,11 +127,15 @@ $(document).ready(function () {
         destroy: true,
         order: [[0, "asc"]]
     });
+<<<<<<< HEAD
     $(document).on('click', '.photo-clickable', function () {
         var imageUrl = $(this).attr('src');
         $('#modalImage').attr('src', imageUrl);
         $('#imageModal').modal('show');
     });
+=======
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
     // Manejar el envío del formulario de filtros
     $('#filtroForm').on('submit', function (e) {
         e.preventDefault();
@@ -140,6 +148,7 @@ $(document).ready(function () {
         tabla.ajax.reload();
     });
 
+<<<<<<< HEAD
     // Maximizar imagen al hacer clic
     $(document).on('click', '.photo-clickable', function () {
         var imageUrl = $(this).attr('src');
@@ -147,6 +156,8 @@ $(document).ready(function () {
         $('#imageModal').modal('show');
     });
 
+=======
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
     // Al hacer clic en "Ver Detalles"
     $(document).on('click', '.btn-ver-detalles', function () {
         var applicantId = $(this).data('id');

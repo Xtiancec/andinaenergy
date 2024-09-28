@@ -29,7 +29,6 @@
     <link href="../app/template/plugins/clockpicker/dist/jquery-clockpicker.min.css" rel="stylesheet">
     <link href="../app/template/plugins/jquery-asColorPicker-master/css/asColorPicker.css" rel="stylesheet">
     <link href="../app/template/plugins/bootstrap-datepicker/bootstrap-datepicker.min.css" rel="stylesheet">
-    <link href="../app/template/plugins/timepicker/bootstrap-timepicker.min.css" rel="stylesheet">
     <link href="../app/template/plugins/bootstrap-daterangepicker/daterangepicker.css" rel="stylesheet">
     <link href="../app/template/plugins/chartist-js/dist/chartist.min.css" rel="stylesheet">
     <link href="../app/template/plugins/chartist-plugin-tooltip-master/dist/chartist-plugin-tooltip.css" rel="stylesheet">

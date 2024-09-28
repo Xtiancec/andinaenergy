@@ -50,7 +50,10 @@ require 'layout/sidebar.php';
                         <tr>
                             <th>Empresa</th>
                             <th>Puesto</th>
+<<<<<<< HEAD
                             <th>Foto</th>
+=======
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
                             <th>Postulante</th>
                             <th>Email</th>
                             <th>Subidos CV</th>
@@ -68,6 +71,7 @@ require 'layout/sidebar.php';
         </div>
     </div>
 </div>
+<<<<<<< HEAD
 <!-- Modal para visualizar la imagen maximizada -->
 <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -87,6 +91,8 @@ require 'layout/sidebar.php';
         </div>
     </div>
 </div>
+=======
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
 
 <!-- Modal Único para Mostrar Documentos y Experiencias -->
 <div class="modal fade" id="modalDetallesApplicant" tabindex="-1" role="dialog" aria-labelledby="modalDetallesApplicantLabel" aria-hidden="true">

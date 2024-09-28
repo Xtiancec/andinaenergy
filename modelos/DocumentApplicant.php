@@ -88,6 +88,7 @@ class DocumentApplicant
     public function listarTodos($start_date = '', $end_date = '')
     {
         $sql = "SELECT 
+<<<<<<< HEAD
     d.id, 
     d.applicant_id,
     a.names AS applicant_name, 
@@ -105,6 +106,22 @@ JOIN jobs j ON a.job_id = j.id
 JOIN companies c ON a.company_id = c.id
 LEFT JOIN applicants_details ad ON a.id = ad.applicant_id";
      // Unir con la tabla applicants_details
+=======
+                    d.id, 
+                    d.applicant_id,
+                    a.names AS applicant_name, 
+                    a.lastname, 
+                    a.username,
+                    a.email,
+                    d.document_name, 
+                    d.state_id,
+                    j.position_name AS job_name,
+                    c.company_name AS company_name
+                FROM documents_applicants d
+                JOIN applicants a ON d.applicant_id = a.id
+                JOIN jobs j ON a.job_id = j.id
+                JOIN companies c ON a.company_id = c.id";
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
 
         $params = [];
 

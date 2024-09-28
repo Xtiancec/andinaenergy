@@ -33,6 +33,7 @@ class DocumentEvaluationController
     public function listarApplicants()
     {
         $this->verificarSuperadmin();
+<<<<<<< HEAD
     
         // Obtener los filtros de fecha si existen
         $start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? $_GET['start_date'] : null;
@@ -41,6 +42,16 @@ class DocumentEvaluationController
         $documentApplicant = new DocumentApplicant();
         $documents = $documentApplicant->listarTodos($start_date, $end_date);
     
+=======
+
+        // Obtener los filtros de fecha si existen
+        $start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? $_GET['start_date'] : null;
+        $end_date = isset($_GET['end_date']) && !empty($_GET['end_date']) ? $_GET['end_date'] : null;
+
+        $documentApplicant = new DocumentApplicant();
+        $documents = $documentApplicant->listarTodos($start_date, $end_date);
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
         if (!empty($documents)) {
             // Agrupar documentos por postulante
             $applicants = [];
@@ -55,7 +66,10 @@ class DocumentEvaluationController
                         'lastname' => $doc['lastname'],
                         'username' => $doc['username'] ?? 'N/A',
                         'email' => $doc['email'] ?? 'N/A',
+<<<<<<< HEAD
                         'photo' => $doc['photo'] ?? null, // Agregando la foto aquí
+=======
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
                         'total_required_cv' => 1, // Solo 1 CV
                         'total_uploaded_cv' => 0,
                         'total_approved_cv' => 0,
@@ -64,7 +78,11 @@ class DocumentEvaluationController
                         'total_approved_other' => 0
                     ];
                 }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
                 // Determinar si el documento es CV o Otro Documento
                 if (stripos($doc['document_name'], 'cv') !== false) {
                     $applicants[$applicantId]['total_uploaded_cv'] += 1;
@@ -78,12 +96,17 @@ class DocumentEvaluationController
                     }
                 }
             }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
             // Calcular porcentajes
             $applicantsList = [];
             foreach ($applicants as $applicant) {
                 // Porcentaje de CV subidos
                 $porcentaje_subidos_cv = $applicant['total_required_cv'] > 0 ? round(min($applicant['total_uploaded_cv'] / $applicant['total_required_cv'], 1) * 100, 2) : 0;
+<<<<<<< HEAD
     
                 // Porcentaje de CV aprobados
                 $porcentaje_aprobados_cv = $applicant['total_required_cv'] > 0 ? round(min($applicant['total_approved_cv'] / $applicant['total_required_cv'], 1) * 100, 2) : 0;
@@ -94,6 +117,18 @@ class DocumentEvaluationController
                 // Porcentaje de Otros Documentos aprobados
                 $porcentaje_aprobados_other = $applicant['total_required_other'] > 0 ? round(min($applicant['total_approved_other'] / $applicant['total_required_other'], 1) * 100, 2) : 0;
     
+=======
+
+                // Porcentaje de CV aprobados
+                $porcentaje_aprobados_cv = $applicant['total_required_cv'] > 0 ? round(min($applicant['total_approved_cv'] / $applicant['total_required_cv'], 1) * 100, 2) : 0;
+
+                // Porcentaje de Otros Documentos subidos (hasta máximo 10)
+                $porcentaje_subidos_other = $applicant['total_required_other'] > 0 ? round(min($applicant['total_uploaded_other'] / $applicant['total_required_other'], 1) * 100, 2) : 0;
+
+                // Porcentaje de Otros Documentos aprobados
+                $porcentaje_aprobados_other = $applicant['total_required_other'] > 0 ? round(min($applicant['total_approved_other'] / $applicant['total_required_other'], 1) * 100, 2) : 0;
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
                 $applicantsList[] = [
                     'company_name' => $applicant['company_name'],
                     'job_name' => $applicant['job_name'],
@@ -102,20 +137,31 @@ class DocumentEvaluationController
                     'lastname' => $applicant['lastname'],
                     'username' => $applicant['username'],
                     'email' => $applicant['email'],
+<<<<<<< HEAD
                     'photo' => $applicant['photo'], // Incluir la foto aquí en la lista final
+=======
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
                     'porcentaje_subidos_cv' => $porcentaje_subidos_cv,
                     'porcentaje_aprobados_cv' => $porcentaje_aprobados_cv,
                     'porcentaje_subidos_other' => $porcentaje_subidos_other,
                     'porcentaje_aprobados_other' => $porcentaje_aprobados_other
                 ];
             }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
             echo json_encode(['success' => true, 'applicants' => $applicantsList]);
         } else {
             echo json_encode(['success' => false, 'message' => 'No se encontraron postulantes.']);
         }
     }
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
     // Obtener documentos subidos por un postulante
     public function documentosApplicant()
     {

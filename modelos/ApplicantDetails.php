@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 class ApplicantDetails
 {
     // Insertar datos personales del postulante
@@ -36,11 +37,27 @@ class ApplicantDetails
         $sql = "INSERT INTO applicants_details (applicant_id, phone, emergency_contact_phone, contacto_emergencia, pais, departamento, provincia, direccion, gender, birth_date, marital_status, children_count, education_level, photo) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $params = [$applicant_id, $phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level, $photo_url];
+=======
+require_once "../config/Conexion.php";
+
+class ApplicantDetails
+{
+    // Insertar datos personales del postulante
+    public function insertar($applicant_id, $phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level)
+    {
+        $sql = "INSERT INTO applicants_details (applicant_id, phone, emergency_contact_phone, contacto_emergencia, pais, departamento, provincia, direccion, gender, birth_date, marital_status, children_count, education_level) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $params = [$applicant_id, $phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level];
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
         return ejecutarConsulta($sql, $params);
     }
 
     // Actualizar datos personales del postulante
+<<<<<<< HEAD
     public function actualizar($id, $phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level, $photo)
+=======
+    public function actualizar($id, $phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level)
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
     {
         // Obtener la ruta actual de la foto
         $sql = "SELECT photo FROM applicants_details WHERE id = ?";
@@ -82,15 +99,22 @@ class ApplicantDetails
 
         // Actualizar datos en la base de datos
         $sql = "UPDATE applicants_details 
+<<<<<<< HEAD
                 SET phone = ?, emergency_contact_phone = ?, contacto_emergencia = ?, pais = ?, departamento = ?, provincia = ?, direccion = ?, gender = ?, birth_date = ?, marital_status = ?, children_count = ?, education_level = ?, photo = ? 
                 WHERE id = ?";
         $params = [$phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level, $photo_url, $id];
+=======
+                SET phone = ?, emergency_contact_phone = ?, contacto_emergencia = ?, pais = ?, departamento = ?, provincia = ?, direccion = ?, gender = ?, birth_date = ?, marital_status = ?, children_count = ?, education_level = ? 
+                WHERE id = ?";
+        $params = [$phone, $emergency_contact_phone, $contacto_emergencia, $pais, $departamento, $provincia, $direccion, $gender, $birth_date, $marital_status, $children_count, $education_level, $id];
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
         return ejecutarConsulta($sql, $params);
     }
 
     // Mostrar detalles personales de un postulante
     public function mostrar($applicant_id)
     {
+<<<<<<< HEAD
         // Query to get applicant details and the job position name
         $sql = "SELECT ad.*, a.lastname, a.surname, a.names, j.position_name
                 FROM applicants_details ad
@@ -110,6 +134,11 @@ class ApplicantDetails
         } else {
             return null;
         }
+=======
+        $sql = "SELECT * FROM applicants_details WHERE applicant_id = ?";
+        $params = [$applicant_id];
+        return ejecutarConsultaSimpleFila($sql, $params);
+>>>>>>> 19cd7fe849e27466995491cd45aa87e6231fe733
     }
     
 }
